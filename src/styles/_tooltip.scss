@@ -1,0 +1,23 @@
+.tooltip {
+  position: relative;
+  display: inline-flex;
+
+  &__bubble {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    width: max-content;
+    max-width: 220px;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem;
+    background: var(--color-text);
+    color: var(--color-text-inverse);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.35;
+    box-shadow: var(--shadow-medium);
+    pointer-events: none;
+  }
+}

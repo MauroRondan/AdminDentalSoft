@@ -1,0 +1,178 @@
+// =============================================================
+//  INPUTS — TextField + campos genéricos (.field).
+// =============================================================
+
+.text-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+  text-align: left;
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--color-text-secondary);
+  }
+
+  &__help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--color-text-tertiary);
+    color: var(--color-text-inverse);
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: help;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+    &::placeholder {
+      color: var(--color-text-tertiary);
+    }
+
+    &:hover {
+      border-color: var(--color-primary-light);
+    }
+
+    &:focus {
+      outline: none;
+      background: var(--color-surface);
+      border-color: var(--color-border-focus);
+      box-shadow: var(--shadow-focus);
+    }
+
+    &--error {
+      border-color: var(--color-error);
+      background: var(--color-error-soft);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(226, 87, 76, 0.18);
+      }
+    }
+  }
+
+  &__error {
+    font-size: 0.78rem;
+    color: var(--color-error);
+  }
+}
+
+// Campo genérico usado dentro de modales (.field / .field-grid).
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  &__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+
+  &__input {
+    height: 2.6rem;
+    padding: 0 0.85rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.6rem;
+    background: var(--color-surface-alt);
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--color-text);
+
+    &:focus {
+      outline: none;
+      background: var(--color-surface);
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-focus);
+    }
+
+    &--error {
+      border-color: var(--color-error);
+      background: var(--color-error-soft);
+    }
+  }
+
+  &__error {
+    font-size: 0.78rem;
+    color: var(--color-error);
+  }
+
+  &__hint {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+textarea.field__input {
+  height: auto;
+  min-height: 4.75rem;
+  padding: 0.6rem 0.85rem;
+  line-height: 1.4;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem 1rem;
+  align-items: start;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+// Chips de estado (Activo / Inactivo, etc.)
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface-alt);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-text);
+  }
+
+  &--active {
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}

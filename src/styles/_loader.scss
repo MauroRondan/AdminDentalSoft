@@ -1,0 +1,54 @@
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  animation: loader-fade 0.2s ease;
+}
+
+.tooth-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  &__bg {
+    fill: var(--color-border);
+  }
+
+  &__fill {
+    fill: var(--color-primary);
+    transform: translateY(24px);
+    animation: tooth-fill 1.6s ease-in-out infinite;
+  }
+
+  &__text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-text-secondary);
+  }
+}
+
+@keyframes tooth-fill {
+  0%,
+  100% {
+    transform: translateY(24px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes loader-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,17 @@
+// =============================================================
+//  Punto de entrada de estilos. Importado una vez en main.jsx.
+//  Agregar cada partial nuevo acá con @use.
+// =============================================================
+
+@use "colors";
+@use "base";
+@use "inputs";
+@use "buttons";
+@use "tooltip";
+@use "login";
+@use "layout";
+@use "loader";
+@use "pages";
+@use "row-menu";
+@use "modal";
+@use "plans";

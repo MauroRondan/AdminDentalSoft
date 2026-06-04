@@ -1,0 +1,55 @@
+// =============================================================
+//  COLOR VARIABLES — misma paleta que el ERP DentalSoft, para que el
+//  panel de administración sea inconfundiblemente de la misma familia.
+//  Definidas como custom properties (runtime / white-label a futuro).
+//  Editar SOLO este archivo para ajustar la paleta.
+// =============================================================
+
+:root {
+  // ----- Brand / accent -----
+  --color-primary: #0aa6b7; // dental turquoise
+  --color-primary-dark: #07808d;
+  --color-primary-light: #46c7d5;
+  --color-accent: #c9a96a; // soft gold (luxury)
+  --color-accent-light: #e3cfa3;
+
+  // ----- Backgrounds / surfaces -----
+  --color-bg: #eef4f5;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f9fa;
+
+  // ----- Text -----
+  --color-text: #0f2b30;
+  --color-text-secondary: #5b7378;
+  --color-text-tertiary: #91a7ab;
+  --color-text-inverse: #ffffff;
+
+  // ----- Borders -----
+  --color-border: #d9e6e8;
+  --color-border-focus: var(--color-primary);
+
+  // ----- States -----
+  --color-error: #e2574c;
+  --color-error-soft: #fdeceb;
+  --color-success: #2fae7a;
+
+  // ----- Buttons -----
+  --color-btn-primary-bg: var(--color-primary);
+  --color-btn-primary-bg-hover: var(--color-primary-dark);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-bg-hover: var(--color-hover-surface);
+  --color-btn-secondary-text: var(--color-primary);
+
+  // ----- Hover -----
+  --color-hover-surface: rgba(10, 166, 183, 0.08);
+
+  // ----- Shadows -----
+  --shadow-soft: 0 4px 14px rgba(15, 43, 48, 0.08);
+  --shadow-medium: 0 12px 30px rgba(15, 43, 48, 0.12);
+  --shadow-elevated: 0 24px 60px rgba(15, 43, 48, 0.18);
+  --shadow-focus: 0 0 0 3px rgba(10, 166, 183, 0.18);
+
+  // ----- Brand gradient -----
+  --gradient-brand: linear-gradient(150deg, #07808d 0%, #0aa6b7 55%, #46c7d5 100%);
+}

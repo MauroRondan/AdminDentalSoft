@@ -1,0 +1,46 @@
+// =============================================================
+//  BUTTONS — componente Button.
+// =============================================================
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: var(--color-btn-primary-bg);
+    color: var(--color-btn-primary-text);
+    box-shadow: var(--shadow-soft);
+
+    &:hover:not(:disabled) {
+      background: var(--color-btn-primary-bg-hover);
+      box-shadow: var(--shadow-medium);
+    }
+  }
+
+  &--secondary {
+    width: auto;
+    background: var(--color-btn-secondary-bg);
+    border-color: var(--color-border);
+    color: var(--color-btn-secondary-text);
+
+    &:hover:not(:disabled) {
+      background: var(--color-btn-secondary-bg-hover);
+    }
+  }
+}
