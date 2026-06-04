@@ -3,6 +3,7 @@ import LoginPage from "../features/pages/LoginPage";
 import DashboardPage from "../features/pages/DashboardPage";
 import ModulosPage from "../features/pages/ModulosPage";
 import PlanesPage from "../features/pages/PlanesPage";
+import LicenciasPage from "../features/pages/LicenciasPage";
 import Layout from "../layouts/Layout";
 import PrivateRoute from "./PrivateRoute";
 
@@ -41,6 +42,17 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <ModulosPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/licencias"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <LicenciasPage />
               </Layout>
             </PrivateRoute>
           }

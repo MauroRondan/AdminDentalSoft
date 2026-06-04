@@ -6,6 +6,7 @@ import { get } from "../utils/storage";
 
 const MENU = [
   { label: "Inicio", path: "/inicio", icon: "dashboard" },
+  { label: "Licencias", path: "/licencias", icon: "building" },
   { label: "Planes", path: "/planes", icon: "tag" },
   { label: "Módulos", path: "/modulos", icon: "layers" },
 ];
