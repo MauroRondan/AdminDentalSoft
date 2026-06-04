@@ -28,7 +28,15 @@ yarn dev            # http://localhost:5174  (el ERP usa :5173)
 
 Login contra `POST /usuario/validar` (mismo endpoint del ERP), pero **solo** se
 permite el acceso a usuarios con `usunivel = 'SA'` (superadmin del SaaS). Cualquier
-otro nivel (administrador de clínica, doctor, paciente) es rechazado en el front.
+otro nivel (administrador de clínica, doctor, paciente) es rechazado en el front,
+y los endpoints `/admin/**` exigen rol `SA` en el backend.
+
+Superadmin de prueba (creado por la migración `sprint26`):
+
+```
+usuario:    superadmin@dentalsoft.com
+contraseña: 123     (cambiar tras el primer login)
+```
 
 ## Contrato de backend esperado (a implementar en BackDentalSoft, paquete /admin)
 
@@ -67,5 +75,11 @@ Todos los endpoints van bajo el context-path `/dental` y exigen rol `SA`.
 
 ## Estado
 
-Iteración 1: scaffold + login SA + CRUD de Módulos y Planes (front). El backend
-`/admin` y la migración SQL son el siguiente paso.
+Iteración 1 **completa y funcional end-to-end**: scaffold + login SA + CRUD de
+Módulos y Planes (front) **y** el backend `/admin` en BackDentalSoft (migración
+`sprint26_admin_planes_modulos.sql`, entidades `Modulo`/`PlanSuscripcion`, repos,
+servicios, controllers y gate de rol `SA` en `WebSecurityConfig`).
+
+Próximos pasos sugeridos: módulo de **Licencias** (listar clínicas, asignarles un
+plan, suspender/reactivar, contratar add-ons vía `licencia_modulo`) y que el ERP
+consuma los módulos del plan para gatear funcionalidades.
