@@ -4,6 +4,7 @@ import DashboardPage from "../features/pages/DashboardPage";
 import ModulosPage from "../features/pages/ModulosPage";
 import PlanesPage from "../features/pages/PlanesPage";
 import LicenciasPage from "../features/pages/LicenciasPage";
+import CobranzasPage from "../features/pages/CobranzasPage";
 import Layout from "../layouts/Layout";
 import PrivateRoute from "./PrivateRoute";
 
@@ -53,6 +54,17 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <LicenciasPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/cobranzas"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <CobranzasPage />
               </Layout>
             </PrivateRoute>
           }

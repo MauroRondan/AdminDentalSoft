@@ -5,11 +5,13 @@ import RowMenu from "../../components/RowMenu";
 import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
+import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
 import useFitRows from "../../hooks/useFitRows";
 import { cargarLoader, ocultarLoader } from "../../hooks/LoaderManager";
 import {
   listLicencias,
   getLicencia,
+  crearLicencia,
   asignarPlan,
   cambiarEstadoLicencia,
 } from "../../services/licenciaService";
@@ -27,6 +29,7 @@ export default function LicenciasPage() {
   const [modulos, setModulos] = useState([]);
   const [planModal, setPlanModal] = useState({ open: false, licencia: null });
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
+  const [newOpen, setNewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const scrollRef = useRef(null);
@@ -111,12 +114,33 @@ export default function LicenciasPage() {
     }
   };
 
+  const crear = async (payload) => {
+    cargarLoader();
+    setSaving(true);
+    try {
+      await crearLicencia(payload);
+      toast.success("Licencia creada");
+      setNewOpen(false);
+      await fetchPage();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
+      ocultarLoader();
+    }
+  };
+
   return (
     <div className="page">
       <header className="page__header">
         <div>
           <h1 className="page__title">Licencias</h1>
           <p className="page__subtitle">Clínicas suscriptas al ERP: plan, estado y add-ons</p>
+        </div>
+        <div className="page__head-actions">
+          <button className="page__new" onClick={() => setNewOpen(true)}>
+            <Icon name="plus" size={18} /> Nueva licencia
+          </button>
         </div>
       </header>
 
@@ -237,6 +261,14 @@ export default function LicenciasPage() {
         licencia={addonsModal.licencia}
         modulos={modulos}
         onChanged={fetchPage}
+      />
+
+      <NuevaLicenciaModal
+        open={newOpen}
+        onClose={() => !saving && setNewOpen(false)}
+        onSave={crear}
+        planes={planes}
+        saving={saving}
       />
     </div>
   );

@@ -26,6 +26,14 @@ export function getLicencia(id) {
   return api.get(`/admin/licencia/${id}`);
 }
 
+/**
+ * POST /admin/licencia — alta de una clínica nueva (licencia + usuario admin).
+ * payload: { licnom, licruc, licmail, lictel, adminNombre, adminEmail, password, planid?, licterminales? }
+ */
+export function crearLicencia(payload) {
+  return api.post("/admin/licencia", payload);
+}
+
 /** PUT /admin/licencia/{id}/plan — asigna (o quita, planid=null) el plan. */
 export function asignarPlan(id, planid) {
   return api.put(`/admin/licencia/${id}/plan`, { planid: planid ?? null });
