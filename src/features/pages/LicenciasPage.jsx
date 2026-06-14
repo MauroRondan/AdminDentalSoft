@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
 import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
+import QRTrialModal from "../../components/QRTrialModal";
 import useFitRows from "../../hooks/useFitRows";
 import { cargarLoader, ocultarLoader } from "../../hooks/LoaderManager";
 import {
@@ -14,7 +15,17 @@ import {
   crearLicencia,
   asignarPlan,
   cambiarEstadoLicencia,
+  convertirLicencia,
+  extenderTrial,
 } from "../../services/licenciaService";
+
+// Días que faltan para que venza un trial (negativo = ya venció).
+const trialDays = (fin) => {
+  if (!fin) return null;
+  const hoy = new Date();
+  const f = new Date(`${fin}T00:00:00`);
+  return Math.ceil((f - new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())) / 86400000);
+};
 import { listPlanes } from "../../services/planService";
 import { listModulosActivos } from "../../services/moduloService";
 
@@ -27,9 +38,10 @@ export default function LicenciasPage() {
   const [total, setTotal] = useState(0);
   const [planes, setPlanes] = useState([]);
   const [modulos, setModulos] = useState([]);
-  const [planModal, setPlanModal] = useState({ open: false, licencia: null });
+  const [planModal, setPlanModal] = useState({ open: false, licencia: null, mode: "assign" });
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
   const [newOpen, setNewOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const scrollRef = useRef(null);
@@ -38,9 +50,11 @@ export default function LicenciasPage() {
   const fetchPage = useCallback(async () => {
     cargarLoader();
     try {
+      const esTrialFilter = filters.estado === "trial";
       const data = await listLicencias({
         search: filters.search || undefined,
-        estado: filters.estado === "" ? undefined : filters.estado === "true",
+        estado: filters.estado === "" || esTrialFilter ? undefined : filters.estado === "true",
+        trial: esTrialFilter ? true : undefined,
         page,
         size: PAGE_SIZE,
       });
@@ -70,21 +84,40 @@ export default function LicenciasPage() {
       .catch(() => {});
   }, []);
 
-  const openPlan = (lic) => setPlanModal({ open: true, licencia: lic });
-  const closePlan = () => !saving && setPlanModal({ open: false, licencia: null });
+  const openPlan = (lic) => setPlanModal({ open: true, licencia: lic, mode: "assign" });
+  const openConvert = (lic) => setPlanModal({ open: true, licencia: lic, mode: "convert" });
+  const closePlan = () => !saving && setPlanModal({ open: false, licencia: null, mode: "assign" });
 
   const savePlan = async (planid) => {
     cargarLoader();
     setSaving(true);
     try {
-      await asignarPlan(planModal.licencia.licid, planid);
-      toast.success("Plan asignado");
-      setPlanModal({ open: false, licencia: null });
+      if (planModal.mode === "convert") {
+        await convertirLicencia(planModal.licencia.licid, planid);
+        toast.success("Prueba convertida a suscripción");
+      } else {
+        await asignarPlan(planModal.licencia.licid, planid);
+        toast.success("Plan asignado");
+      }
+      setPlanModal({ open: false, licencia: null, mode: "assign" });
       await fetchPage();
     } catch (err) {
       toast.error(err.message);
     } finally {
       setSaving(false);
+      ocultarLoader();
+    }
+  };
+
+  const extender = async (lic, dias = 15) => {
+    cargarLoader();
+    try {
+      await extenderTrial(lic.licid, dias);
+      toast.success(`Prueba extendida ${dias} días`);
+      await fetchPage();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
       ocultarLoader();
     }
   };
@@ -138,6 +171,9 @@ export default function LicenciasPage() {
           <p className="page__subtitle">Clínicas suscriptas al ERP: plan, estado y add-ons</p>
         </div>
         <div className="page__head-actions">
+          <button className="page__new page__new--ghost" onClick={() => setQrOpen(true)}>
+            <Icon name="sparkles" size={18} /> QR de prueba
+          </button>
           <button className="page__new" onClick={() => setNewOpen(true)}>
             <Icon name="plus" size={18} /> Nueva licencia
           </button>
@@ -168,6 +204,7 @@ export default function LicenciasPage() {
           <option value="">Todas</option>
           <option value="true">Activas</option>
           <option value="false">Suspendidas</option>
+          <option value="trial">En prueba</option>
         </select>
       </div>
 
@@ -222,10 +259,28 @@ export default function LicenciasPage() {
                       <span className={`badge badge--${l.licestado === false ? "off" : "on"}`}>
                         {l.licestado === false ? "Suspendida" : "Activa"}
                       </span>
+                      {l.lictrialfin && (() => {
+                        const td = trialDays(l.lictrialfin);
+                        return (
+                          <span
+                            className={`badge badge--${td < 0 ? "off" : "accent"}`}
+                            style={{ marginLeft: 6 }}
+                            title={`Prueba hasta ${l.lictrialfin}`}
+                          >
+                            {td < 0 ? "Prueba vencida" : td === 0 ? "Prueba: último día" : `Prueba: ${td} día${td === 1 ? "" : "s"}`}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td>
                       <RowMenu
                         items={[
+                          ...(l.lictrialfin
+                            ? [
+                                { label: "Convertir a pago", icon: "check", onClick: () => openConvert(l) },
+                                { label: "Extender prueba 15 días", icon: "sparkles", onClick: () => extender(l, 15) },
+                              ]
+                            : []),
                           { label: "Asignar plan", icon: "tag", onClick: () => openPlan(l) },
                           { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
                           {
@@ -270,6 +325,8 @@ export default function LicenciasPage() {
         planes={planes}
         saving={saving}
       />
+
+      <QRTrialModal open={qrOpen} onClose={() => setQrOpen(false)} />
     </div>
   );
 }

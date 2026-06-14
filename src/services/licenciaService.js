@@ -7,13 +7,14 @@ import { api } from "./apiClient";
  *
  * GET /admin/licencia — paginado + filtros. Devuelve { data, total, page, size }.
  */
-export async function listLicencias({ search, estado, planid, page = 1, size = 20 } = {}) {
+export async function listLicencias({ search, estado, planid, trial, page = 1, size = 20 } = {}) {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (estado !== undefined && estado !== null && estado !== "") {
     params.set("estado", String(estado));
   }
   if (planid) params.set("planid", planid);
+  if (trial !== undefined && trial !== null) params.set("trial", String(trial));
   params.set("page", page);
   params.set("size", size);
   const res = await api.get(`/admin/licencia?${params.toString()}`);
@@ -42,6 +43,16 @@ export function asignarPlan(id, planid) {
 /** PUT /admin/licencia/{id}/estado — suspende (false) o reactiva (true). */
 export function cambiarEstadoLicencia(id, estado) {
   return api.put(`/admin/licencia/${id}/estado`, { estado });
+}
+
+/** PUT /admin/licencia/{id}/convertir — convierte un trial en suscripción paga (limpia trial + plan opcional). */
+export function convertirLicencia(id, planid) {
+  return api.put(`/admin/licencia/${id}/convertir`, { planid: planid ?? null });
+}
+
+/** PUT /admin/licencia/{id}/extender-trial — extiende la prueba N días. */
+export function extenderTrial(id, dias) {
+  return api.put(`/admin/licencia/${id}/extender-trial`, { dias });
 }
 
 /** POST /admin/licencia/{id}/modulo — agrega/actualiza un add-on. */

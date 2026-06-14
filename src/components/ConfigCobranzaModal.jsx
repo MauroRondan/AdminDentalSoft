@@ -5,6 +5,10 @@ import { Icon } from "./icons";
 export default function ConfigCobranzaModal({ open, onClose, onSave, config = null, saving = false }) {
   const [diacobro, setDiacobro] = useState(1);
   const [graciadias, setGraciadias] = useState(5);
+  const [trialDias, setTrialDias] = useState(30);
+  const [ventasWhatsapp, setVentasWhatsapp] = useState("");
+  const [ventasEmail, setVentasEmail] = useState("");
+  const [ventasTel, setVentasTel] = useState("");
   const [render, setRender] = useState(open);
 
   useEffect(() => {
@@ -12,6 +16,10 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
     setRender(true);
     setDiacobro(config?.fcgdiacobro ?? 1);
     setGraciadias(config?.fcggraciadias ?? 5);
+    setTrialDias(config?.fcgtrialdias ?? 30);
+    setVentasWhatsapp(config?.fcgventaswhatsapp ?? "");
+    setVentasEmail(config?.fcgventasemail ?? "");
+    setVentasTel(config?.fcgventastel ?? "");
   }, [open, config]);
 
   useEffect(() => {
@@ -34,7 +42,15 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
   const submit = () => {
     const d = Math.max(1, Math.min(28, Number(diacobro) || 1));
     const g = Math.max(0, Math.min(60, Number(graciadias) || 0));
-    onSave({ diacobro: d, graciadias: g });
+    const t = Math.max(1, Math.min(365, Number(trialDias) || 30));
+    onSave({
+      diacobro: d,
+      graciadias: g,
+      trialDias: t,
+      ventasWhatsapp: ventasWhatsapp.trim() || null,
+      ventasEmail: ventasEmail.trim() || null,
+      ventasTel: ventasTel.trim() || null,
+    });
   };
 
   return (
@@ -84,6 +100,56 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
                 onChange={(e) => setGraciadias(e.target.value)}
               />
               <span className="field__hint">Tras el vencimiento, antes de bloquear.</span>
+            </label>
+            <label className="field">
+              <span className="field__label">Días de prueba gratis</span>
+              <input
+                type="number"
+                min="1"
+                max="365"
+                className="field__input"
+                value={trialDias}
+                onChange={(e) => setTrialDias(e.target.value)}
+              />
+              <span className="field__hint">Duración del trial al registrarse por QR.</span>
+            </label>
+          </div>
+
+          <h3 style={{ margin: "1.25rem 0 0.5rem", fontSize: "0.95rem" }}>Contactos de ventas</h3>
+          <p style={{ margin: "0 0 0.75rem", fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
+            Se le muestran al cliente cuando su prueba vence, para que pueda suscribirse.
+          </p>
+          <div className="field-grid">
+            <label className="field">
+              <span className="field__label">WhatsApp</span>
+              <input
+                type="text"
+                className="field__input"
+                value={ventasWhatsapp}
+                onChange={(e) => setVentasWhatsapp(e.target.value)}
+                placeholder="595981123456"
+              />
+              <span className="field__hint">Con código de país, sin signos.</span>
+            </label>
+            <label className="field">
+              <span className="field__label">Email de ventas</span>
+              <input
+                type="email"
+                className="field__input"
+                value={ventasEmail}
+                onChange={(e) => setVentasEmail(e.target.value)}
+                placeholder="ventas@dentalsoft.com.py"
+              />
+            </label>
+            <label className="field">
+              <span className="field__label">Teléfono</span>
+              <input
+                type="text"
+                className="field__input"
+                value={ventasTel}
+                onChange={(e) => setVentasTel(e.target.value)}
+                placeholder="021 555 0100"
+              />
             </label>
           </div>
         </div>

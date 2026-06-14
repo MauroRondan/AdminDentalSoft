@@ -88,6 +88,13 @@ export default function DashboardPage() {
       danger: d && d.facturasVencidas > 0,
     },
     {
+      icon: "sparkles",
+      value: v(d?.trialesActivos),
+      label: "Pruebas activas",
+      hint: d ? `${d.trialesPorVencer} por vencer (≤3d) · ${d.trialesVencidos} vencidas` : null,
+      danger: d && d.trialesVencidos > 0,
+    },
+    {
       icon: "package",
       value: d ? `${d.planesActivos} / ${d.modulosActivos} / ${d.addonsActivos}` : "…",
       label: "Planes / Módulos / Add-ons",
