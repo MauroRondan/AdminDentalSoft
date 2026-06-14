@@ -7,6 +7,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
   const [graciadias, setGraciadias] = useState(5);
   const [trialDias, setTrialDias] = useState(30);
   const [ventasWhatsapp, setVentasWhatsapp] = useState("");
+  const [ventasWhatsapp2, setVentasWhatsapp2] = useState("");
   const [ventasEmail, setVentasEmail] = useState("");
   const [ventasTel, setVentasTel] = useState("");
   const [render, setRender] = useState(open);
@@ -18,6 +19,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
     setGraciadias(config?.fcggraciadias ?? 5);
     setTrialDias(config?.fcgtrialdias ?? 30);
     setVentasWhatsapp(config?.fcgventaswhatsapp ?? "");
+    setVentasWhatsapp2(config?.fcgventaswhatsapp2 ?? "");
     setVentasEmail(config?.fcgventasemail ?? "");
     setVentasTel(config?.fcgventastel ?? "");
   }, [open, config]);
@@ -48,6 +50,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
       graciadias: g,
       trialDias: t,
       ventasWhatsapp: ventasWhatsapp.trim() || null,
+      ventasWhatsapp2: ventasWhatsapp2.trim() || null,
       ventasEmail: ventasEmail.trim() || null,
       ventasTel: ventasTel.trim() || null,
     });
@@ -121,7 +124,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
           </p>
           <div className="field-grid">
             <label className="field">
-              <span className="field__label">WhatsApp</span>
+              <span className="field__label">WhatsApp 1</span>
               <input
                 type="text"
                 className="field__input"
@@ -130,6 +133,17 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
                 placeholder="595981123456"
               />
               <span className="field__hint">Con código de país, sin signos.</span>
+            </label>
+            <label className="field">
+              <span className="field__label">WhatsApp 2</span>
+              <input
+                type="text"
+                className="field__input"
+                value={ventasWhatsapp2}
+                onChange={(e) => setVentasWhatsapp2(e.target.value)}
+                placeholder="595982456789"
+              />
+              <span className="field__hint">Opcional, segundo vendedor.</span>
             </label>
             <label className="field">
               <span className="field__label">Email de ventas</span>
