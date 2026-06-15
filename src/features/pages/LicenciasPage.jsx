@@ -5,6 +5,7 @@ import RowMenu from "../../components/RowMenu";
 import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
+import LicenciaDetalleModal from "../../components/LicenciaDetalleModal";
 import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
 import QRTrialModal from "../../components/QRTrialModal";
 import useFitRows from "../../hooks/useFitRows";
@@ -13,6 +14,7 @@ import {
   listLicencias,
   getLicencia,
   crearLicencia,
+  updateLicencia,
   asignarPlan,
   cambiarEstadoLicencia,
   convertirLicencia,
@@ -40,6 +42,7 @@ export default function LicenciasPage() {
   const [modulos, setModulos] = useState([]);
   const [planModal, setPlanModal] = useState({ open: false, licencia: null, mode: "assign" });
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
+  const [detalle, setDetalle] = useState({ open: false, licencia: null, mode: "view" });
   const [newOpen, setNewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,6 +121,26 @@ export default function LicenciasPage() {
     } catch (err) {
       toast.error(err.message);
     } finally {
+      ocultarLoader();
+    }
+  };
+
+  const openVer = (lic) => setDetalle({ open: true, licencia: lic, mode: "view" });
+  const openEditar = (lic) => setDetalle({ open: true, licencia: lic, mode: "edit" });
+  const closeDetalle = () => !saving && setDetalle({ open: false, licencia: null, mode: "view" });
+
+  const guardarDatos = async (payload) => {
+    cargarLoader();
+    setSaving(true);
+    try {
+      await updateLicencia(detalle.licencia.licid, payload);
+      toast.success("Licencia actualizada");
+      setDetalle({ open: false, licencia: null, mode: "view" });
+      await fetchPage();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSaving(false);
       ocultarLoader();
     }
   };
@@ -275,6 +298,8 @@ export default function LicenciasPage() {
                     <td>
                       <RowMenu
                         items={[
+                          { label: "Ver detalle", icon: "eye", onClick: () => openVer(l) },
+                          { label: "Editar datos", icon: "edit", onClick: () => openEditar(l) },
                           ...(l.lictrialfin
                             ? [
                                 { label: "Convertir a pago", icon: "check", onClick: () => openConvert(l) },
@@ -316,6 +341,15 @@ export default function LicenciasPage() {
         licencia={addonsModal.licencia}
         modulos={modulos}
         onChanged={fetchPage}
+      />
+
+      <LicenciaDetalleModal
+        open={detalle.open}
+        mode={detalle.mode}
+        licencia={detalle.licencia}
+        onClose={closeDetalle}
+        onSave={guardarDatos}
+        saving={saving}
       />
 
       <NuevaLicenciaModal

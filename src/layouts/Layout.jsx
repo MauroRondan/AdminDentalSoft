@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "./Sidebar";
+import RevelarPassModal from "../components/RevelarPassModal";
 import { Icon, ToothIcon } from "../components/icons";
 import { APP_NAME, APP_SUFFIX } from "../config/constants";
 
 export default function Layout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [revelarOpen, setRevelarOpen] = useState(false);
+
+  // Atajo oculto: F6 abre la recuperación de contraseña (función interna SA).
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "F6") {
+        e.preventDefault();
+        setRevelarOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className="layout">
@@ -31,6 +45,8 @@ export default function Layout({ children }) {
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className="layout__content">{children}</main>
+
+      <RevelarPassModal open={revelarOpen} onClose={() => setRevelarOpen(false)} />
     </div>
   );
 }

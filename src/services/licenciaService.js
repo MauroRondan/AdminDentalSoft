@@ -35,6 +35,15 @@ export function crearLicencia(payload) {
   return api.post("/admin/licencia", payload);
 }
 
+/**
+ * PUT /admin/licencia/{id} — edita los datos de contacto/comerciales de la
+ * clínica. No incluye el RUC (los usuarios se vinculan por él) ni la contraseña.
+ * payload: { licnom, licmail, lictel, licterminales }
+ */
+export function updateLicencia(id, payload) {
+  return api.put(`/admin/licencia/${id}`, payload);
+}
+
 /** PUT /admin/licencia/{id}/plan — asigna (o quita, planid=null) el plan. */
 export function asignarPlan(id, planid) {
   return api.put(`/admin/licencia/${id}/plan`, { planid: planid ?? null });

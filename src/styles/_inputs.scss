@@ -120,6 +120,61 @@
     font-size: 0.78rem;
     color: var(--color-text-secondary);
   }
+
+  // Input de solo lectura (modo "ver" o campos no editables como el RUC).
+  // Se puede leer y copiar, pero se ve claramente como no editable.
+  &__input--ro {
+    background: var(--color-surface-alt);
+    color: var(--color-text-secondary);
+    cursor: default;
+
+    &:hover,
+    &:focus {
+      border-color: var(--color-border);
+      box-shadow: none;
+      background: var(--color-surface-alt);
+    }
+
+    &:disabled {
+      opacity: 1;
+    }
+  }
+
+  // Valor estático de solo lectura (datos que se gestionan con otras acciones:
+  // plan, estado, origen, fechas, contadores).
+  &__static {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.6rem;
+    padding: 0 0.85rem;
+    border: 1px dashed var(--color-border);
+    border-radius: 0.6rem;
+    background: var(--color-surface-alt);
+    font-size: 0.9rem;
+    color: var(--color-text);
+  }
+
+  // Contraseña privada: cifrada y bloqueada, con candado a la derecha.
+  &__locked {
+    position: relative;
+    display: flex;
+
+    .field__input {
+      flex: 1;
+      padding-right: 2.5rem;
+      letter-spacing: 0.18em;
+    }
+  }
+
+  &__locked-icon {
+    position: absolute;
+    top: 50%;
+    right: 0.85rem;
+    transform: translateY(-50%);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+  }
 }
 
 textarea.field__input {
