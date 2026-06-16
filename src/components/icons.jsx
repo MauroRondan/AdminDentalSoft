@@ -177,10 +177,10 @@ export function Icon({ name, size = 20, className }) {
   );
 }
 
+// Logo de marca DentalSoft "mono themeable" (silueta del logo nuevo por máscara,
+// color = currentColor). Mismo patrón que el ERP.
 export function ToothIcon({ className }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2.5 C9.5 1 6 1.2 4.3 3.2 C2.6 5.2 2.8 8 3.5 11 C3.9 13.5 4.4 16 5.2 18 C5.7 19.8 6.5 21.5 7.5 21.5 C8.5 21.5 8.9 19.5 9.2 17.5 C9.5 15 10.5 13 12 13 C13.5 13 14.5 15 14.8 17.5 C15.1 19.5 15.5 21.5 16.5 21.5 C17.5 21.5 18.3 19.8 18.8 18 C19.6 16 20.1 13.5 20.5 11 C21.2 8 21.4 5.2 19.7 3.2 C18 1.2 14.5 1 12 2.5 Z" />
-    </svg>
+    <span className={`brand-tooth${className ? " " + className : ""}`} aria-hidden="true" />
   );
 }

@@ -2,6 +2,18 @@
 //  BASE — reset liviano y estilos globales del documento.
 // =============================================================
 
+// Logo de marca DentalSoft "mono themeable" (componente <ToothIcon/>): silueta del
+// logo nuevo por máscara + relleno `currentColor`, se tiñe con el color del tema.
+.brand-tooth {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("/LogoPrincipalBlanco.png") center / contain no-repeat;
+  mask: url("/LogoPrincipalBlanco.png") center / contain no-repeat;
+}
+
 * {
   box-sizing: border-box;
 }
