@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing",
+      "runtimeExecutable": "/Users/jesusvelaztiqui/.nvm/versions/node/v22.22.0/bin/node",
+      "runtimeArgs": [
+        "/Users/jesusvelaztiqui/Desktop/Zentra Solutions/DentalSoft/LandingDentalSoft/node_modules/vite/bin/vite.js",
+        "/Users/jesusvelaztiqui/Desktop/Zentra Solutions/DentalSoft/LandingDentalSoft",
+        "--port",
+        "5180",
+        "--strictPort"
+      ],
+      "port": 5180
+    }
+  ]
+}
