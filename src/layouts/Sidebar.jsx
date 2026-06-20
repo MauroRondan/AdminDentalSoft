@@ -8,6 +8,8 @@ const MENU = [
   { label: "Inicio", path: "/inicio", icon: "dashboard" },
   { label: "Licencias", path: "/licencias", icon: "building" },
   { label: "Cobranzas", path: "/cobranzas", icon: "wallet" },
+  { label: "Atribución", path: "/atribucion", icon: "star" },
+  { label: "Orígenes de venta", path: "/origenes-venta", icon: "circleUser" },
   { label: "Planes", path: "/planes", icon: "tag" },
   { label: "Módulos", path: "/modulos", icon: "layers" },
 ];

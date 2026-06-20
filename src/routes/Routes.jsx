@@ -5,6 +5,8 @@ import ModulosPage from "../features/pages/ModulosPage";
 import PlanesPage from "../features/pages/PlanesPage";
 import LicenciasPage from "../features/pages/LicenciasPage";
 import CobranzasPage from "../features/pages/CobranzasPage";
+import VentaOrigenPage from "../features/pages/VentaOrigenPage";
+import AtribucionPage from "../features/pages/AtribucionPage";
 import Layout from "../layouts/Layout";
 import PrivateRoute from "./PrivateRoute";
 
@@ -65,6 +67,28 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <CobranzasPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/origenes-venta"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <VentaOrigenPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/atribucion"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <AtribucionPage />
               </Layout>
             </PrivateRoute>
           }
