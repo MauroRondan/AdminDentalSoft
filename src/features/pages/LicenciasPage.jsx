@@ -6,6 +6,7 @@ import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
 import LicenciaDetalleModal from "../../components/LicenciaDetalleModal";
+import LicenciaWhatsAppModal from "../../components/LicenciaWhatsAppModal";
 import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
 import QRTrialModal from "../../components/QRTrialModal";
 import useFitRows from "../../hooks/useFitRows";
@@ -42,6 +43,7 @@ export default function LicenciasPage() {
   const [modulos, setModulos] = useState([]);
   const [planModal, setPlanModal] = useState({ open: false, licencia: null, mode: "assign" });
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
+  const [whatsappModal, setWhatsappModal] = useState({ open: false, licencia: null });
   const [detalle, setDetalle] = useState({ open: false, licencia: null, mode: "view" });
   const [newOpen, setNewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -308,6 +310,7 @@ export default function LicenciasPage() {
                             : []),
                           { label: "Asignar plan", icon: "tag", onClick: () => openPlan(l) },
                           { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
+                          { label: "WhatsApp", icon: "settings", onClick: () => setWhatsappModal({ open: true, licencia: l }) },
                           {
                             label: l.licestado === false ? "Reactivar" : "Suspender",
                             icon: "power",
@@ -358,6 +361,12 @@ export default function LicenciasPage() {
         onSave={crear}
         planes={planes}
         saving={saving}
+      />
+
+      <LicenciaWhatsAppModal
+        open={whatsappModal.open}
+        onClose={() => setWhatsappModal({ open: false, licencia: null })}
+        licencia={whatsappModal.licencia}
       />
 
       <QRTrialModal open={qrOpen} onClose={() => setQrOpen(false)} />
