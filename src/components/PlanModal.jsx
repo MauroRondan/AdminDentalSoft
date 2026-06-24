@@ -42,10 +42,12 @@ export default function PlanModal({
   onSave,
   initial = null,
   modulosDisponibles = [],
+  recursosDisponibles = [],
   saving = false,
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [selected, setSelected] = useState(() => new Set());
+  const [limites, setLimites] = useState({}); // recurso -> string ("" = ilimitado)
   const [errors, setErrors] = useState({});
   const [render, setRender] = useState(open);
 
@@ -66,9 +68,15 @@ export default function PlanModal({
         plnest: initial.plnest ?? true,
       });
       setSelected(new Set([...modIdsOf(initial.modulos), ...esenciales]));
+      const lim = {};
+      Object.entries(initial.limites ?? {}).forEach(([k, v]) => {
+        lim[k] = v == null ? "" : String(v);
+      });
+      setLimites(lim);
     } else {
       setForm(EMPTY_FORM);
       setSelected(new Set(esenciales));
+      setLimites({});
     }
   }, [open, initial, modulosDisponibles]);
 
@@ -126,8 +134,19 @@ export default function PlanModal({
 
   const numOrNull = (v) => (v === "" || v == null ? null : Number(v));
 
+  const setLimite = (recurso, value) =>
+    setLimites((prev) => ({ ...prev, [recurso]: value }));
+
   const submit = () => {
     if (!validate()) return;
+    // Cupos: solo recursos válidos con valor numérico; vacío = ilimitado (se omite).
+    const limitesPayload = {};
+    recursosDisponibles.forEach((r) => {
+      const v = limites[r.recurso];
+      if (v !== "" && v != null && !Number.isNaN(Number(v))) {
+        limitesPayload[r.recurso] = Math.max(0, Math.trunc(Number(v)));
+      }
+    });
     onSave({
       plncodigo: normalizeCodigo(form.plncodigo),
       plnnom: form.plnnom.trim(),
@@ -138,6 +157,7 @@ export default function PlanModal({
       plndestacado: Boolean(form.plndestacado),
       plnest: Boolean(form.plnest),
       modulos: [...selected],
+      limites: limitesPayload,
     });
   };
 
@@ -159,7 +179,7 @@ export default function PlanModal({
           <div>
             <h2 className="appt-modal__title">{isEdit ? "Editar plan" : "Nuevo plan"}</h2>
             <p className="appt-modal__subtitle">
-              Definí el precio mensual y qué módulos incluye este plan
+              Definí el precio mensual y los cupos de uso de este plan
             </p>
           </div>
           <button type="button" className="appt-modal__close" onClick={onClose} aria-label="Cerrar">
@@ -239,19 +259,6 @@ export default function PlanModal({
               </div>
             </div>
 
-            <label className="field">
-              <span className="field__label">Máx. de usuarios / terminales</span>
-              <input
-                type="number"
-                step="1"
-                min="0"
-                className="field__input"
-                placeholder="Vacío = sin límite"
-                value={form.plnmaxterminales}
-                onChange={(e) => update("plnmaxterminales", e.target.value)}
-              />
-            </label>
-
             <div className="field">
               <span className="field__label">¿Destacar como recomendado?</span>
               <div className="chip-group">
@@ -290,6 +297,39 @@ export default function PlanModal({
                   Inactivo
                 </button>
               </div>
+            </div>
+
+            <div className="field field--full">
+              <span className="field__label">Límites de uso (cupos)</span>
+              <p className="field__hint">
+                Todos los planes habilitan todos los módulos; lo que cambia es
+                cuánto puede cargar la clínica. Dejá un cupo vacío para “ilimitado”.
+              </p>
+              {recursosDisponibles.length === 0 ? (
+                <p className="field__hint">No se pudo cargar el catálogo de recursos.</p>
+              ) : (
+                <div className="limite-grid">
+                  {recursosDisponibles.map((r) => (
+                    <label className="field" key={r.recurso}>
+                      <span className="field__label">
+                        {r.etiqueta}
+                        {!r.enforced && (
+                          <span className="field__hint-inline"> · informativo</span>
+                        )}
+                      </span>
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        className="field__input"
+                        placeholder="Ilimitado"
+                        value={limites[r.recurso] ?? ""}
+                        onChange={(e) => setLimite(r.recurso, e.target.value)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="field field--full">

@@ -27,6 +27,14 @@ export function getPlan(id) {
 }
 
 /**
+ * GET /admin/plan/recursos — catálogo de recursos limitables (cupos).
+ * Devuelve [{ recurso, etiqueta, enforced }]. Modelo por cupos (Sprint 42).
+ */
+export function getRecursosLimite() {
+  return api.get("/admin/plan/recursos");
+}
+
+/**
  * POST /admin/plan
  * payload: { plncodigo, plnnom, plndesc, plnprecio, plnperiodo,
  *            plnmaxterminales, plndestacado, plnest, modulos: [modid, ...] }

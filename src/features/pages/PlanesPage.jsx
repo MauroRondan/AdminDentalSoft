@@ -10,6 +10,7 @@ import {
   createPlan,
   updatePlan,
   deletePlan,
+  getRecursosLimite,
 } from "../../services/planService";
 import { listModulosActivos } from "../../services/moduloService";
 
@@ -21,6 +22,7 @@ const modIdsOf = (modulos) =>
 export default function PlanesPage() {
   const [planes, setPlanes] = useState([]);
   const [modulos, setModulos] = useState([]);
+  const [recursos, setRecursos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -31,15 +33,40 @@ export default function PlanesPage() {
     return map;
   }, [modulos]);
 
+  const recursoLabel = useMemo(() => {
+    const map = new Map();
+    recursos.forEach((r) => map.set(r.recurso, r.etiqueta));
+    return map;
+  }, [recursos]);
+
+  const renderCupos = (plan) => {
+    const limites = plan.limites ?? {};
+    const entries = Object.entries(limites);
+    if (!entries.length) {
+      return <li className="plan-card__cupo plan-card__cupo--empty">Cupos ilimitados</li>;
+    }
+    return entries.map(([recurso, valor]) => (
+      <li key={recurso} className="plan-card__cupo">
+        <Icon name="circleUser" size={14} />
+        <span>
+          {recursoLabel.get(recurso) ?? recurso}:{" "}
+          <strong>{valor == null ? "∞" : valor}</strong>
+        </span>
+      </li>
+    ));
+  };
+
   const fetchAll = useCallback(async () => {
     cargarLoader();
     try {
-      const [planesRes, modsRes] = await Promise.all([
+      const [planesRes, modsRes, recsRes] = await Promise.all([
         listPlanes({ page: 1, size: 100 }),
         listModulosActivos(),
+        getRecursosLimite().catch(() => []),
       ]);
       setPlanes(planesRes?.data ?? []);
       setModulos(modsRes ?? []);
+      setRecursos(recsRes ?? []);
     } catch (err) {
       toast.error(err.message || "Error al cargar los planes");
       setPlanes([]);
@@ -177,14 +204,13 @@ export default function PlanesPage() {
 
               <div className="plan-card__meta">
                 <span className="cell-code">{p.plncodigo}</span>
-                {p.plnmaxterminales ? (
-                  <span>Hasta {p.plnmaxterminales} usuarios</span>
-                ) : (
-                  <span>Usuarios ilimitados</span>
-                )}
                 {!p.plnest && <span className="badge badge--off">Inactivo</span>}
               </div>
 
+              <span className="plan-card__section-label">Cupos de uso</span>
+              <ul className="plan-card__cupos">{renderCupos(p)}</ul>
+
+              <span className="plan-card__section-label">Módulos incluidos</span>
               <ul className="plan-card__modules">{renderModulos(p)}</ul>
 
               <div className="plan-card__actions">
@@ -209,6 +235,7 @@ export default function PlanesPage() {
         onSave={save}
         initial={editing}
         modulosDisponibles={modulos}
+        recursosDisponibles={recursos}
         saving={saving}
       />
     </div>

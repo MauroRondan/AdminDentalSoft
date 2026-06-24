@@ -10,6 +10,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
   const [ventasWhatsapp2, setVentasWhatsapp2] = useState("");
   const [ventasEmail, setVentasEmail] = useState("");
   const [ventasTel, setVentasTel] = useState("");
+  const [gatingModulos, setGatingModulos] = useState(false);
   const [render, setRender] = useState(open);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
     setVentasWhatsapp2(config?.fcgventaswhatsapp2 ?? "");
     setVentasEmail(config?.fcgventasemail ?? "");
     setVentasTel(config?.fcgventastel ?? "");
+    setGatingModulos(Boolean(config?.fcggatingmodulos));
   }, [open, config]);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
       ventasWhatsapp2: ventasWhatsapp2.trim() || null,
       ventasEmail: ventasEmail.trim() || null,
       ventasTel: ventasTel.trim() || null,
+      gatingModulos: Boolean(gatingModulos),
     });
   };
 
@@ -165,6 +168,32 @@ export default function ConfigCobranzaModal({ open, onClose, onSave, config = nu
                 placeholder="021 555 0100"
               />
             </label>
+          </div>
+
+          <h3 style={{ margin: "1.25rem 0 0.5rem", fontSize: "0.95rem" }}>Modelo de venta</h3>
+          <div className="field">
+            <span className="field__label">Vender por módulos (gating)</span>
+            <div className="chip-group">
+              <button
+                type="button"
+                className={`chip${!gatingModulos ? " chip--active" : ""}`}
+                onClick={() => setGatingModulos(false)}
+              >
+                Por cupos (todo habilitado)
+              </button>
+              <button
+                type="button"
+                className={`chip${gatingModulos ? " chip--active" : ""}`}
+                onClick={() => setGatingModulos(true)}
+              >
+                Por módulos (gating)
+              </button>
+            </div>
+            <span className="field__hint">
+              “Por cupos”: todas las clínicas ven todos los módulos y se limitan por
+              cantidad de usuarios/pacientes (modelo actual). “Por módulos”: el ERP
+              oculta los módulos que el plan de cada clínica no incluye.
+            </span>
           </div>
         </div>
 

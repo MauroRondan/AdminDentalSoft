@@ -73,3 +73,17 @@ export function agregarAddon(id, modid, precio) {
 export function quitarAddon(id, modid) {
   return api.del(`/admin/licencia/${id}/modulo/${modid}`);
 }
+
+/**
+ * GET /admin/licencia/{id}/limite — estado de cupos de la licencia.
+ * Devuelve { recursos:[{recurso,etiqueta,enforced}], planLimites:{recurso:valor},
+ * overrides:{recurso:valor}, uso:[{recurso,etiqueta,limite,usado,disponible,enforced}] }.
+ */
+export function getLimitesLicencia(id) {
+  return api.get(`/admin/licencia/${id}/limite`);
+}
+
+/** PUT /admin/licencia/{id}/limite — reemplaza los overrides de cupo de la licencia. */
+export function setLimitesLicencia(id, limites) {
+  return api.put(`/admin/licencia/${id}/limite`, { limites });
+}

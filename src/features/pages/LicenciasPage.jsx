@@ -5,6 +5,7 @@ import RowMenu from "../../components/RowMenu";
 import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
+import LicenciaLimitesModal from "../../components/LicenciaLimitesModal";
 import LicenciaDetalleModal from "../../components/LicenciaDetalleModal";
 import LicenciaWhatsAppModal from "../../components/LicenciaWhatsAppModal";
 import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
@@ -43,6 +44,7 @@ export default function LicenciasPage() {
   const [modulos, setModulos] = useState([]);
   const [planModal, setPlanModal] = useState({ open: false, licencia: null, mode: "assign" });
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
+  const [limitesModal, setLimitesModal] = useState({ open: false, licencia: null });
   const [whatsappModal, setWhatsappModal] = useState({ open: false, licencia: null });
   const [detalle, setDetalle] = useState({ open: false, licencia: null, mode: "view" });
   const [newOpen, setNewOpen] = useState(false);
@@ -309,6 +311,7 @@ export default function LicenciasPage() {
                               ]
                             : []),
                           { label: "Asignar plan", icon: "tag", onClick: () => openPlan(l) },
+                          { label: "Cupos", icon: "circleUser", onClick: () => setLimitesModal({ open: true, licencia: l }) },
                           { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
                           { label: "WhatsApp", icon: "settings", onClick: () => setWhatsappModal({ open: true, licencia: l }) },
                           {
@@ -343,6 +346,13 @@ export default function LicenciasPage() {
         onClose={() => setAddonsModal({ open: false, licencia: null })}
         licencia={addonsModal.licencia}
         modulos={modulos}
+        onChanged={fetchPage}
+      />
+
+      <LicenciaLimitesModal
+        open={limitesModal.open}
+        onClose={() => setLimitesModal({ open: false, licencia: null })}
+        licencia={limitesModal.licencia}
         onChanged={fetchPage}
       />
 
