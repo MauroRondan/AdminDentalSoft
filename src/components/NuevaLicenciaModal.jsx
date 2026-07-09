@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./icons";
+import { listEdiciones } from "../services/licenciaService";
 
 const EMPTY_FORM = {
   licnom: "",
@@ -9,6 +10,7 @@ const EMPTY_FORM = {
   adminNombre: "",
   adminEmail: "",
   password: "",
+  edicion: "DENTAL",
   planid: "",
   licterminales: "",
 };
@@ -23,12 +25,17 @@ export default function NuevaLicenciaModal({ open, onClose, onSave, planes = [],
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [render, setRender] = useState(open);
+  // Fallback DENTAL por si el backend aún no expone /admin/edicion (o falla).
+  const [ediciones, setEdiciones] = useState([{ ediid: 0, edicodigo: "DENTAL", edinom: "DentalSoft" }]);
 
   useEffect(() => {
     if (!open) return;
     setRender(true);
     setErrors({});
     setForm(EMPTY_FORM);
+    listEdiciones()
+      .then((eds) => { if (Array.isArray(eds) && eds.length) setEdiciones(eds); })
+      .catch(() => {});
   }, [open]);
 
   useEffect(() => {
@@ -78,6 +85,7 @@ export default function NuevaLicenciaModal({ open, onClose, onSave, planes = [],
       adminNombre: form.adminNombre.trim(),
       adminEmail: form.adminEmail.trim(),
       password: form.password,
+      edicion: form.edicion || "DENTAL",
       planid: form.planid === "" ? null : Number(form.planid),
       licterminales: numOrNull(form.licterminales),
     });
@@ -154,6 +162,24 @@ export default function NuevaLicenciaModal({ open, onClose, onSave, planes = [],
                 onChange={(e) => update("licmail", e.target.value)}
               />
               {errors.licmail && <span className="field__error">{errors.licmail}</span>}
+            </label>
+
+            <label className="field">
+              <span className="field__label">Edición *</span>
+              <select
+                className="field__input"
+                value={form.edicion}
+                onChange={(e) => update("edicion", e.target.value)}
+              >
+                {ediciones.map((ed) => (
+                  <option key={ed.ediid} value={ed.edicodigo}>
+                    {ed.edinom}
+                  </option>
+                ))}
+              </select>
+              <span className="field__hint">
+                Define qué especialidades usa la clínica (odontología, clínica general…).
+              </span>
             </label>
 
             <label className="field">

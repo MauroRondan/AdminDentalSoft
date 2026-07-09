@@ -35,6 +35,16 @@ export function crearLicencia(payload) {
   return api.post("/admin/licencia", payload);
 }
 
+/** GET /admin/edicion — ediciones activas (para el selector "Edición" del alta de licencia). */
+export function listEdiciones() {
+  return api.get("/admin/edicion");
+}
+
+/** PUT /admin/edicion/{id} — actualiza el branding de una edición (marca, logo, color, dominio). */
+export function updateEdicionBranding(id, payload) {
+  return api.put(`/admin/edicion/${id}`, payload);
+}
+
 /**
  * PUT /admin/licencia/{id} — edita los datos de contacto/comerciales de la
  * clínica. No incluye el RUC (los usuarios se vinculan por él) ni la contraseña.

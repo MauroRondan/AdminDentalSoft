@@ -7,6 +7,7 @@ import LicenciasPage from "../features/pages/LicenciasPage";
 import CobranzasPage from "../features/pages/CobranzasPage";
 import VentaOrigenPage from "../features/pages/VentaOrigenPage";
 import AtribucionPage from "../features/pages/AtribucionPage";
+import EdicionesPage from "../features/pages/EdicionesPage";
 import Layout from "../layouts/Layout";
 import PrivateRoute from "./PrivateRoute";
 
@@ -89,6 +90,17 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <AtribucionPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/ediciones"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <EdicionesPage />
               </Layout>
             </PrivateRoute>
           }
