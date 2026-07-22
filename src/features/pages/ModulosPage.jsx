@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
-import RowMenu from "../../components/RowMenu";
+import AccionesModal from "../../components/AccionesModal";
 import Pagination from "../../components/Pagination";
 import ModuloModal from "../../components/ModuloModal";
 import useFitRows from "../../hooks/useFitRows";
@@ -23,6 +23,12 @@ export default function ModulosPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [accionesFor, setAccionesFor] = useState(null);
+
+  const accionesDe = (m) => [
+    { label: "Editar", icon: "edit", onClick: () => openEdit(m) },
+    { label: "Desactivar", icon: "trash", danger: true, onClick: () => remove(m) },
+  ];
 
   const scrollRef = useRef(null);
   const PAGE_SIZE = useFitRows(scrollRef);
@@ -172,7 +178,11 @@ export default function ModulosPage() {
                 </tr>
               ) : (
                 rows.map((m) => (
-                  <tr key={m.modid}>
+                  <tr
+                    key={m.modid}
+                    className="is-clickable"
+                    onClick={() => setAccionesFor(m)}
+                  >
                     <td data-label="Módulo">
                       <span className="cell-name">
                         <span className="cell-name__avatar">
@@ -206,13 +216,8 @@ export default function ModulosPage() {
                         {m.modest ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td>
-                      <RowMenu
-                        items={[
-                          { label: "Editar", icon: "edit", onClick: () => openEdit(m) },
-                          { label: "Desactivar", icon: "trash", danger: true, onClick: () => remove(m) },
-                        ]}
-                      />
+                    <td className="data-table__chevron">
+                      <Icon name="chevronRight" size={18} />
                     </td>
                   </tr>
                 ))
@@ -229,6 +234,14 @@ export default function ModulosPage() {
         onSave={save}
         initial={editing}
         saving={saving}
+      />
+
+      <AccionesModal
+        open={Boolean(accionesFor)}
+        onClose={() => setAccionesFor(null)}
+        titulo={accionesFor?.modnom || "Módulo"}
+        subtitulo={accionesFor?.modcodigo}
+        items={accionesFor ? accionesDe(accionesFor) : []}
       />
     </div>
   );

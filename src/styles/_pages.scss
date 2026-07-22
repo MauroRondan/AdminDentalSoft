@@ -202,6 +202,17 @@
     background: color-mix(in srgb, var(--color-primary) 5%, transparent);
   }
 
+  // Fila que abre el AccionesModal al hacer click.
+  tbody tr.is-clickable {
+    cursor: pointer;
+  }
+
+  // Último td con el chevron indicador de fila clickeable.
+  &__chevron {
+    color: var(--color-text-tertiary);
+    line-height: 0;
+  }
+
   &__empty {
     text-align: center;
     color: var(--color-text-secondary);

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
-import RowMenu from "../../components/RowMenu";
+import AccionesModal from "../../components/AccionesModal";
 import Pagination from "../../components/Pagination";
 import RegistrarPagoModal from "../../components/RegistrarPagoModal";
 import GenerarFacturacionModal from "../../components/GenerarFacturacionModal";
@@ -30,6 +30,17 @@ export default function CobranzasPage() {
   const [configOpen, setConfigOpen] = useState(false);
   const [config, setConfig] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [accionesFor, setAccionesFor] = useState(null);
+
+  // Solo las facturas pendientes tienen acciones disponibles.
+  const accionesDe = (f) => [
+    {
+      label: "Registrar pago",
+      icon: "check",
+      onClick: () => setPagoModal({ open: true, factura: f }),
+    },
+    { label: "Anular", icon: "trash", danger: true, onClick: () => anular(f) },
+  ];
 
   const scrollRef = useRef(null);
   const PAGE_SIZE = useFitRows(scrollRef);
@@ -198,8 +209,14 @@ export default function CobranzasPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((f) => (
-                  <tr key={f.flcid}>
+                rows.map((f) => {
+                  const accionable = f.flcestado === "PENDIENTE";
+                  return (
+                  <tr
+                    key={f.flcid}
+                    className={accionable ? "is-clickable" : undefined}
+                    onClick={accionable ? () => setAccionesFor(f) : undefined}
+                  >
                     <td data-label="Clínica">
                       <span className="cell-name">
                         <span className="cell-name__avatar">
@@ -223,22 +240,12 @@ export default function CobranzasPage() {
                         </span>
                       )}
                     </td>
-                    <td>
-                      {f.flcestado === "PENDIENTE" ? (
-                        <RowMenu
-                          items={[
-                            {
-                              label: "Registrar pago",
-                              icon: "check",
-                              onClick: () => setPagoModal({ open: true, factura: f }),
-                            },
-                            { label: "Anular", icon: "trash", danger: true, onClick: () => anular(f) },
-                          ]}
-                        />
-                      ) : null}
+                    <td className="data-table__chevron">
+                      {accionable && <Icon name="chevronRight" size={18} />}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -267,6 +274,18 @@ export default function CobranzasPage() {
         onSave={guardarConfig}
         config={config}
         saving={saving}
+      />
+
+      <AccionesModal
+        open={Boolean(accionesFor)}
+        onClose={() => setAccionesFor(null)}
+        titulo={accionesFor?.licnom || (accionesFor ? `Lic. ${accionesFor.flclicid}` : "Factura")}
+        subtitulo={
+          accionesFor
+            ? `Período ${accionesFor.flcperiodo} · ${formatMoney(accionesFor.flcmonto)}`
+            : undefined
+        }
+        items={accionesFor ? accionesDe(accionesFor) : []}
       />
     </div>
   );

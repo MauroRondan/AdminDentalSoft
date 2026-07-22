@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
-import RowMenu from "../../components/RowMenu";
+import AccionesModal from "../../components/AccionesModal";
 import Pagination from "../../components/Pagination";
 import VentaOrigenModal from "../../components/VentaOrigenModal";
 import QRTrialModal from "../../components/QRTrialModal";
@@ -26,6 +26,13 @@ export default function VentaOrigenPage() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [qrOrigen, setQrOrigen] = useState(null); // origen para el modal de QR
+  const [accionesFor, setAccionesFor] = useState(null);
+
+  const accionesDe = (o) => [
+    { label: "Ver / descargar QR", icon: "eye", onClick: () => setQrOrigen(o) },
+    { label: "Editar", icon: "edit", onClick: () => openEdit(o) },
+    { label: "Desactivar", icon: "trash", danger: true, onClick: () => remove(o) },
+  ];
 
   const scrollRef = useRef(null);
   const PAGE_SIZE = useFitRows(scrollRef);
@@ -171,7 +178,11 @@ export default function VentaOrigenPage() {
                 </tr>
               ) : (
                 rows.map((o) => (
-                  <tr key={o.vorid}>
+                  <tr
+                    key={o.vorid}
+                    className="is-clickable"
+                    onClick={() => setAccionesFor(o)}
+                  >
                     <td data-label="Origen">
                       <span className="cell-name">
                         <span className="cell-name__avatar">
@@ -193,14 +204,8 @@ export default function VentaOrigenPage() {
                         {o.vorest ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td>
-                      <RowMenu
-                        items={[
-                          { label: "Ver / descargar QR", icon: "eye", onClick: () => setQrOrigen(o) },
-                          { label: "Editar", icon: "edit", onClick: () => openEdit(o) },
-                          { label: "Desactivar", icon: "trash", danger: true, onClick: () => remove(o) },
-                        ]}
-                      />
+                    <td className="data-table__chevron">
+                      <Icon name="chevronRight" size={18} />
                     </td>
                   </tr>
                 ))
@@ -220,6 +225,14 @@ export default function VentaOrigenPage() {
       />
 
       <QRTrialModal open={Boolean(qrOrigen)} origen={qrOrigen} onClose={() => setQrOrigen(null)} />
+
+      <AccionesModal
+        open={Boolean(accionesFor)}
+        onClose={() => setAccionesFor(null)}
+        titulo={accionesFor?.vornombre || "Origen"}
+        subtitulo={accionesFor ? canalLabel(accionesFor.vorcanal) : undefined}
+        items={accionesFor ? accionesDe(accionesFor) : []}
+      />
     </div>
   );
 }

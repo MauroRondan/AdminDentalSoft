@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
-import RowMenu from "../../components/RowMenu";
+import AccionesModal from "../../components/AccionesModal";
 import Pagination from "../../components/Pagination";
 import LicenciaPlanModal from "../../components/LicenciaPlanModal";
 import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
@@ -50,6 +50,28 @@ export default function LicenciasPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [accionesFor, setAccionesFor] = useState(null);
+
+  const accionesDe = (l) => [
+    { label: "Ver detalle", icon: "eye", onClick: () => openVer(l) },
+    { label: "Editar datos", icon: "edit", onClick: () => openEditar(l) },
+    ...(l.lictrialfin
+      ? [
+          { label: "Convertir a pago", icon: "check", onClick: () => openConvert(l) },
+          { label: "Extender prueba 15 días", icon: "sparkles", onClick: () => extender(l, 15) },
+        ]
+      : []),
+    { label: "Asignar plan", icon: "tag", onClick: () => openPlan(l) },
+    { label: "Cupos", icon: "circleUser", onClick: () => setLimitesModal({ open: true, licencia: l }) },
+    { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
+    { label: "WhatsApp", icon: "settings", onClick: () => setWhatsappModal({ open: true, licencia: l }) },
+    {
+      label: l.licestado === false ? "Reactivar" : "Suspender",
+      icon: "power",
+      danger: l.licestado !== false,
+      onClick: () => toggleEstado(l),
+    },
+  ];
 
   const scrollRef = useRef(null);
   const PAGE_SIZE = useFitRows(scrollRef);
@@ -257,7 +279,11 @@ export default function LicenciasPage() {
                 </tr>
               ) : (
                 rows.map((l) => (
-                  <tr key={l.licid}>
+                  <tr
+                    key={l.licid}
+                    className="is-clickable"
+                    onClick={() => setAccionesFor(l)}
+                  >
                     <td data-label="Clínica">
                       <span className="cell-name">
                         <span className="cell-name__avatar">
@@ -299,29 +325,8 @@ export default function LicenciasPage() {
                         );
                       })()}
                     </td>
-                    <td>
-                      <RowMenu
-                        items={[
-                          { label: "Ver detalle", icon: "eye", onClick: () => openVer(l) },
-                          { label: "Editar datos", icon: "edit", onClick: () => openEditar(l) },
-                          ...(l.lictrialfin
-                            ? [
-                                { label: "Convertir a pago", icon: "check", onClick: () => openConvert(l) },
-                                { label: "Extender prueba 15 días", icon: "sparkles", onClick: () => extender(l, 15) },
-                              ]
-                            : []),
-                          { label: "Asignar plan", icon: "tag", onClick: () => openPlan(l) },
-                          { label: "Cupos", icon: "circleUser", onClick: () => setLimitesModal({ open: true, licencia: l }) },
-                          { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
-                          { label: "WhatsApp", icon: "settings", onClick: () => setWhatsappModal({ open: true, licencia: l }) },
-                          {
-                            label: l.licestado === false ? "Reactivar" : "Suspender",
-                            icon: "power",
-                            danger: l.licestado !== false,
-                            onClick: () => toggleEstado(l),
-                          },
-                        ]}
-                      />
+                    <td className="data-table__chevron">
+                      <Icon name="chevronRight" size={18} />
                     </td>
                   </tr>
                 ))
@@ -380,6 +385,16 @@ export default function LicenciasPage() {
       />
 
       <QRTrialModal open={qrOpen} onClose={() => setQrOpen(false)} />
+
+      <AccionesModal
+        open={Boolean(accionesFor)}
+        onClose={() => setAccionesFor(null)}
+        titulo={accionesFor?.licnom || "Licencia"}
+        subtitulo={
+          accionesFor?.licruc ? `RUC ${accionesFor.licruc}` : accionesFor?.plannombre
+        }
+        items={accionesFor ? accionesDe(accionesFor) : []}
+      />
     </div>
   );
 }
