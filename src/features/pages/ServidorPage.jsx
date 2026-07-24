@@ -129,9 +129,27 @@ export default function ServidorPage() {
     if (d.disco?.pct >= 85) avisos.push(`el disco está al ${d.disco.pct}% — ampliá el almacenamiento pronto`);
     if (d.ram?.pct >= 85) avisos.push(`la RAM está al ${d.ram.pct}% — considerá subir de plan`);
     if (d.cpu?.pct >= 85) avisos.push(`la CPU está al ${d.cpu.pct}% ahora mismo — mirá la curva: si es constante, hace falta más CPU`);
+    if (d.swap?.total > 0 && d.swap?.pct >= 20) avisos.push(`está usando swap (${d.swap.pct}%) — falta RAM, subí de plan`);
+    if (d.pg?.max && d.pg?.usadas >= d.pg.max * 0.85) avisos.push(`las conexiones a la BD están al límite (${d.pg.usadas}/${d.pg.max})`);
+    if (d.pg?.cacheHitPct != null && d.pg.cacheHitPct < 90) avisos.push(`el cache de la BD cayó al ${d.pg.cacheHitPct}% — a Postgres le falta memoria`);
+    const horasBackup = d.backup?.fechaMs ? (Date.now() - d.backup.fechaMs) / 3_600_000 : null;
+    if (horasBackup != null && horasBackup > 48) avisos.push(`el último backup tiene ${Math.floor(horasBackup / 24)} día(s) — hacé uno nuevo`);
     if (!avisos.length) return { ok: true, texto: "Todo holgado: el plan actual del servidor alcanza y sobra." };
     return { ok: false, texto: `Atención: ${avisos.join("; ")}.` };
   })();
+
+  // "hace 3 h" / "hace 2 días" para el último backup.
+  const hace = (ms) => {
+    if (!ms) return "—";
+    const h = Math.floor((Date.now() - ms) / 3_600_000);
+    if (h < 1) return "hace menos de 1 h";
+    if (h < 24) return `hace ${h} h`;
+    const dias = Math.floor(h / 24);
+    return `hace ${dias} día${dias === 1 ? "" : "s"}`;
+  };
+
+  const pgPct = d?.pg?.max ? Math.round((d.pg.usadas * 100) / d.pg.max) : 0;
+  const backupViejo = !d?.backup || (Date.now() - d.backup.fechaMs) / 3_600_000 > 48;
 
   return (
     <div className="page">
@@ -176,6 +194,58 @@ export default function ServidorPage() {
 
       <div className="srv-grid">
         <section className="srv-card">
+          <h2 className="srv-card__titulo">Conexiones a la base</h2>
+          <div className="srv-base">
+            <div className="srv-base__fila">
+              <span className="srv-base__nombre">En uso</span>
+              <span className="srv-base__tam">
+                {d?.pg?.max ? `${d.pg.usadas} de ${d.pg.max}` : "…"}
+              </span>
+            </div>
+            <div className="srv-base__barra">
+              <i style={{ width: `${Math.max(2, pgPct)}%`, background: tono(pgPct) }} />
+            </div>
+          </div>
+          <dl className="srv-datos">
+            <div><dt>Activas (consultando)</dt><dd>{d?.pg?.activas ?? "…"}</dd></div>
+            <div><dt>Libres (idle)</dt><dd>{d?.pg?.idle ?? "…"}</dd></div>
+            <div><dt>En transacción colgada</dt><dd>{d?.pg?.enTransaccion ?? "…"}</dd></div>
+            <div>
+              <dt>Cache de la BD (ideal ≥ 97%)</dt>
+              <dd style={{ color: d?.pg?.cacheHitPct != null && d.pg.cacheHitPct < 97 ? "var(--color-error)" : "var(--color-success)" }}>
+                {d?.pg?.cacheHitPct != null ? `${d.pg.cacheHitPct}%` : "…"}
+              </dd>
+            </div>
+            <div>
+              <dt>Último backup</dt>
+              <dd style={{ color: backupViejo ? "var(--color-error)" : "var(--color-success)" }}>
+                {d ? (d.backup ? `${hace(d.backup.fechaMs)} · ${tam(d.backup.bytes)}` : "sin backups") : "…"}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section className="srv-card">
+          <h2 className="srv-card__titulo">Tablas más pesadas</h2>
+          {(d?.tablas ?? []).map((t) => {
+            const max = Math.max(...(d?.tablas ?? []).map((x) => x.bytes || 0), 1);
+            return (
+              <div className="srv-base srv-base--fina" key={t.nombre}>
+                <div className="srv-base__fila">
+                  <span className="srv-base__nombre">{t.nombre}</span>
+                  <span className="srv-base__tam">{tam(t.bytes)}</span>
+                </div>
+                <div className="srv-base__barra">
+                  <i style={{ width: `${Math.max(3, ((t.bytes || 0) * 100) / max)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+          {d && !(d.tablas ?? []).length && <p className="srv-historia__vacio">Sin datos.</p>}
+          {!d && <p className="srv-historia__vacio">…</p>}
+        </section>
+
+        <section className="srv-card">
           <h2 className="srv-card__titulo">Bases de datos</h2>
           {(d?.bases ?? []).map((b) => {
             const max = Math.max(...(d?.bases ?? []).map((x) => x.bytes || 0), 1);
@@ -197,6 +267,16 @@ export default function ServidorPage() {
         <section className="srv-card">
           <h2 className="srv-card__titulo">Backend</h2>
           <dl className="srv-datos">
+            <div>
+              <dt>Usuarios conectados ahora</dt>
+              <dd>{d?.ws ? `${d.ws.sesiones} (en ${d.ws.clinicas} clínica${d.ws.clinicas === 1 ? "" : "s"})` : "…"}</dd>
+            </div>
+            <div>
+              <dt>Swap (ideal: 0)</dt>
+              <dd style={{ color: d?.swap?.pct >= 20 ? "var(--color-error)" : "var(--color-text)" }}>
+                {d ? (d.swap?.total > 0 ? `${gb(d.swap.usada)} de ${gb(d.swap.total)} (${d.swap.pct}%)` : "sin swap") : "…"}
+              </dd>
+            </div>
             <div><dt>Memoria del backend (heap)</dt><dd>{d ? `${gb(d.jvm.heapUsado)} de ${gb(d.jvm.heapMax)}` : "…"}</dd></div>
             <div><dt>Backend encendido hace</dt><dd>{d ? uptime(d.jvm.uptimeMs) : "…"}</dd></div>
             <div><dt>Servidor encendido hace</dt><dd>{d ? uptime(d.sistema.uptimeMs) : "…"}</dd></div>

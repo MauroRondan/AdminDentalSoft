@@ -119,6 +119,14 @@
 .srv-base {
   margin-bottom: 0.8rem;
 
+  // Variante compacta para listas largas (top de tablas).
+  &--fina {
+    margin-bottom: 0.45rem;
+
+    .srv-base__fila { margin-bottom: 0.15rem; font-size: 0.86rem; }
+    .srv-base__barra { height: 0.4rem; }
+  }
+
   &__fila {
     display: flex;
     justify-content: space-between;
