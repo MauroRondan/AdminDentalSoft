@@ -12,6 +12,7 @@ const MENU = [
   { label: "Orígenes de venta", path: "/origenes-venta", icon: "circleUser" },
   { label: "Planes", path: "/planes", icon: "tag" },
   { label: "Módulos", path: "/modulos", icon: "layers" },
+  { label: "Servidor", path: "/servidor", icon: "server" },
 ];
 
 export default function Sidebar({ open, onClose }) {
