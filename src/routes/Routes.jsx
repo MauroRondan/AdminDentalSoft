@@ -4,6 +4,7 @@ import DashboardPage from "../features/pages/DashboardPage";
 import ModulosPage from "../features/pages/ModulosPage";
 import PlanesPage from "../features/pages/PlanesPage";
 import LicenciasPage from "../features/pages/LicenciasPage";
+import LaboratoriosPage from "../features/pages/LaboratoriosPage";
 import CobranzasPage from "../features/pages/CobranzasPage";
 import VentaOrigenPage from "../features/pages/VentaOrigenPage";
 import AtribucionPage from "../features/pages/AtribucionPage";
@@ -57,6 +58,17 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <LicenciasPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/laboratorios"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <LaboratoriosPage />
               </Layout>
             </PrivateRoute>
           }
