@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "./icons";
+import ConfirmModal from "./ConfirmModal";
 import { API_URL } from "../config/constants";
 import { formatMoney } from "../utils/format";
 import {
@@ -53,6 +54,8 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   // Consumo del mes + recargas (Sprint 87): el SA ve cuánto le queda de verdad.
   const [uso, setUso] = useState(null);           // { consumo, recargado, cupoMes, recargas }
   const [recargando, setRecargando] = useState(false);
+  // Confirmación con modal propio (nada de window.confirm).
+  const [confirmar, setConfirmar] = useState(null); // { titulo, mensaje, textoOk, danger, accion }
   const [plantillas, setPlantillas] = useState([]);
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
@@ -165,22 +168,32 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
    * Recarga: suma cupo al MES EN CURSO con un paquete del catálogo. NO cambia el plan
    * (que sigue siendo fijo y recurrente); el precio se factura una sola vez, ese mes.
    */
-  const recargar = async (paquete) => {
-    if (recargando) return;
-    const ok = window.confirm(
-      `Recargar ${Number(paquete.cupo).toLocaleString("es-PY")} mensajes a ${licencia?.licnom}?\n\n` +
-      `Se le cobra ${formatMoney(paquete.precio)} UNA sola vez, en la factura de este mes. ` +
-      `El saldo se suma al que le quede.`,
-    );
-    if (!ok) return;
+  const recargar = (paquete) => {
+    setConfirmar({
+      titulo: `Recargar ${Number(paquete.cupo).toLocaleString("es-PY")} mensajes`,
+      mensaje:
+        `${licencia?.licnom}\n\n` +
+        `Se le cobra ${formatMoney(paquete.precio)} una sola vez, en la factura de este mes. ` +
+        `El saldo se suma al que le quede.`,
+      textoOk: "Recargar",
+      accion: async () => {
+        const r = await recargarMensajes(licid, { pmsid: paquete.pmsid });
+        setUso((u) => ({ ...(u || {}), ...r }));
+        toast.success(`Recargado: +${Number(paquete.cupo).toLocaleString("es-PY")}`);
+        onSaved?.();
+      },
+    });
+  };
+
+  /** Ejecuta la acción del confirm y lo cierra (los errores quedan en el toast). */
+  const confirmarAccion = async () => {
+    if (!confirmar || recargando) return;
     setRecargando(true);
     try {
-      const r = await recargarMensajes(licid, { pmsid: paquete.pmsid });
-      setUso((u) => ({ ...(u || {}), ...r }));
-      toast.success(`Recargado: +${Number(paquete.cupo).toLocaleString("es-PY")} este mes`);
-      onSaved?.();
+      await confirmar.accion();
+      setConfirmar(null);
     } catch (err) {
-      toast.error(err.message || "No se pudo recargar");
+      toast.error(err.message || "No se pudo completar la acción");
     } finally {
       setRecargando(false);
     }
@@ -216,15 +229,18 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     }
   };
 
-  const borrarPlantilla = async (p) => {
-    if (!window.confirm(`¿Eliminar la plantilla "${p.wplnombre}"? También se elimina en Meta.`)) return;
-    try {
-      await eliminarPlantilla(licid, p.wplid);
-      toast.success("Plantilla eliminada");
-      setPlantillas((prev) => prev.filter((x) => x.wplid !== p.wplid));
-    } catch (err) {
-      toast.error(err.message || "No se pudo eliminar");
-    }
+  const borrarPlantilla = (p) => {
+    setConfirmar({
+      titulo: "Eliminar plantilla",
+      mensaje: `"${p.wplnombre}"\n\nTambién se elimina en Meta y no se puede deshacer.`,
+      textoOk: "Eliminar",
+      danger: true,
+      accion: async () => {
+        await eliminarPlantilla(licid, p.wplid);
+        toast.success("Plantilla eliminada");
+        setPlantillas((prev) => prev.filter((x) => x.wplid !== p.wplid));
+      },
+    });
   };
 
   const usarRecordatorio = async (p) => {
@@ -538,6 +554,17 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
           </button>
         </footer>
       </div>
+
+      <ConfirmModal
+        open={Boolean(confirmar)}
+        titulo={confirmar?.titulo}
+        mensaje={confirmar?.mensaje}
+        textoOk={confirmar?.textoOk}
+        danger={confirmar?.danger}
+        saving={recargando}
+        onConfirm={confirmarAccion}
+        onClose={() => !recargando && setConfirmar(null)}
+      />
     </div>
   );
 }
