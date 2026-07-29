@@ -30,6 +30,10 @@ export function marcarRecordatorio(licid, wplid) {
   return api.post(`/admin/whatsapp/${licid}/plantillas/${wplid}/recordatorio`, {});
 }
 
+export function crearRecordatorioPlantilla(licid, nombre) {
+  return api.post(`/admin/whatsapp/${licid}/plantillas/recordatorio`, nombre ? { nombre } : {});
+}
+
 export function eliminarPlantilla(licid, wplid) {
   return api.del(`/admin/whatsapp/${licid}/plantillas/${wplid}`);
 }

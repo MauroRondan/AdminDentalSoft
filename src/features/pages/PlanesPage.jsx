@@ -242,8 +242,9 @@ export default function PlanesPage() {
             <div>
               <h2 className="page__title" style={{ fontSize: "1.15rem" }}>Planes de mensajes · WhatsApp</h2>
               <p className="page__subtitle">
-                Cupos de mensajería del bot por mes. La ganancia entra al ingreso mensual; el costo
-                es lo que le pagás a Meta. Se asignan desde Licencias → “Plan de mensajes”.
+                Recordatorios del bot por mes (lo único que se cobra: agendar y recibir mensajes es
+                gratis). La ganancia entra al ingreso mensual; el costo es lo que le pagás a Meta.
+                Se asignan desde Licencias → “Plan de mensajes”.
               </p>
             </div>
           </header>
@@ -252,9 +253,7 @@ export default function PlanesPage() {
               <thead>
                 <tr>
                   <th>Plan</th>
-                  <th>Agendan con bot</th>
-                  <th>Recordatorios</th>
-                  <th>Iniciás vos</th>
+                  <th>Recordatorios/mes</th>
                   <th>Costo Meta/mes</th>
                   <th>Precio final/mes</th>
                   <th>Ganancia</th>
@@ -264,8 +263,6 @@ export default function PlanesPage() {
                 {planesMensaje.map((p) => (
                   <tr key={p.pmsid}>
                     <td style={{ fontWeight: 700 }}>{p.nombre}</td>
-                    <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
-                    <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
                     <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
                     <td>{formatMoney(p.costo)}</td>
                     <td style={{ fontWeight: 700 }}>{formatMoney(p.precio)}</td>

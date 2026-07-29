@@ -10,6 +10,7 @@ import {
   listPlantillas,
   crearPlantilla,
   marcarRecordatorio,
+  crearRecordatorioPlantilla,
   eliminarPlantilla,
 } from "../services/whatsappService";
 import {
@@ -60,6 +61,8 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   // como cualquier otro campo del formulario. Así el SA puede arrepentirse cerrando.
   const [recargaPend, setRecargaPend] = useState(null); // { pmsid, cupo, precio }
   const [plantillas, setPlantillas] = useState([]);
+  const [recNombre, setRecNombre] = useState("");
+  const [creandoRec, setCreandoRec] = useState(false);
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
   const [plGuardando, setPlGuardando] = useState(false);
@@ -262,6 +265,24 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     }
   };
 
+  const crearRecordatorio = async () => {
+    if (creandoRec) return;
+    setCreandoRec(true);
+    try {
+      const r = await crearRecordatorioPlantilla(licid, recNombre.trim());
+      const p = r?.data || r;
+      toast.success(`Plantilla "${p?.wplnombre || "recordatorio_turno"}" enviada a Meta — queda Pendiente`);
+      setRecNombre("");
+      const pl = await listPlantillas(licid);
+      setPlantillas(Array.isArray(pl) ? pl : []);
+    } catch (err) {
+      // Muestra el MOTIVO REAL de Meta (nombre en enfriamiento tras borrar, token, etc.).
+      toast.error(err.message || "No se pudo crear la plantilla de recordatorio");
+    } finally {
+      setCreandoRec(false);
+    }
+  };
+
   const CopyRow = ({ label, value }) => (
     <label className="field field--full">
       <span className="field__label">{label}</span>
@@ -403,7 +424,7 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                         <span className="module-option__info">
                           <span className="module-option__name">{p.nombre}</span>
                           <span className="module-option__meta">
-                            {Number(p.cupo).toLocaleString("es-PY")} conversaciones · recordatorios · iniciás vos — ganás {formatMoney(p.ganancia)}
+                            {Number(p.cupo).toLocaleString("es-PY")} recordatorios/mes — ganás {formatMoney(p.ganancia)}
                           </span>
                         </span>
                         <span className="module-option__price">{formatMoney(p.precio)}</span>
@@ -424,14 +445,10 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                     Saldo · comprado {Number(uso.comprado ?? 0).toLocaleString("es-PY")}
                   </span>
                   <p style={{ margin: "0 0 .6rem", fontSize: ".85rem", color: "var(--color-text-secondary)" }}>
-                    Usados — conversaciones <b>{uso.consumo.conversaciones ?? 0}</b> ·
-                    recordatorios <b>{uso.consumo.recordatorios ?? 0}</b> ·
-                    iniciados <b>{uso.consumo.iniciados ?? 0}</b>
+                    Recordatorios usados <b>{uso.consumo.recordatorios ?? 0}</b>
                     {uso.restante && (
                       <> — <b style={{ color: "var(--color-primary)" }}>
-                        quedan {Number(uso.restante.conversaciones ?? 0).toLocaleString("es-PY")} /
-                        {" "}{Number(uso.restante.recordatorios ?? 0).toLocaleString("es-PY")} /
-                        {" "}{Number(uso.restante.iniciados ?? 0).toLocaleString("es-PY")}
+                        quedan {Number(uso.restante.recordatorios ?? 0).toLocaleString("es-PY")}
                       </b></>
                     )}
                   </p>
@@ -488,6 +505,8 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                   </div>
                   {plantillas.map((p) => {
                     const b = PLANTILLA_BADGE[p.wplestado] || { color: "var(--color-text-secondary)", label: p.wplestado || "—" };
+                    let botones = [];
+                    try { const x = JSON.parse(p.wplbotones || "[]"); botones = Array.isArray(x) ? x : []; } catch { botones = []; }
                     return (
                       <div className="field field--full" key={p.wplid}
                         style={{ border: "1px solid var(--color-border)", borderRadius: ".7rem", padding: ".6rem .8rem" }}>
@@ -513,16 +532,41 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                         <p style={{ margin: ".35rem 0 0", fontSize: ".82rem", color: "var(--color-text-secondary)" }}>
                           {p.wplcuerpo}
                         </p>
+                        {botones.length > 0 && (
+                          <div style={{ margin: ".4rem 0 0", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontSize: ".72rem", color: "var(--color-text-secondary)" }}>
+                              {botones.length} {botones.length === 1 ? "botón" : "botones"}:
+                            </span>
+                            {botones.map((bt, i) => (
+                              <span key={i} style={{ fontSize: ".72rem", fontWeight: 600,
+                                background: "var(--color-surface-2, #eef1f4)", borderRadius: ".5rem", padding: ".1rem .45rem" }}>
+                                {bt}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
 
                   {!plNueva ? (
-                    <div className="field field--full">
-                      <button type="button" className="chip" onClick={() => setPlNueva(true)}>
-                        + Nueva plantilla
-                      </button>
-                    </div>
+                    <>
+                      <div className="field field--full" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                        <input type="text" className="field__input" style={{ flex: "1 1 180px", minWidth: 0 }}
+                          placeholder="recordatorio_turno (nombre)"
+                          value={recNombre} onChange={(e) => setRecNombre(e.target.value)} />
+                        <button type="button" className="chip" disabled={creandoRec}
+                          style={{ fontWeight: 700, color: "var(--color-primary)" }}
+                          onClick={crearRecordatorio}>
+                          {creandoRec ? "Enviando a Meta…" : "Crear recordatorio (3 botones)"}
+                        </button>
+                      </div>
+                      <div className="field field--full">
+                        <button type="button" className="chip" onClick={() => setPlNueva(true)}>
+                          + Nueva plantilla
+                        </button>
+                      </div>
+                    </>
                   ) : (
                     <>
                       <label className="field">

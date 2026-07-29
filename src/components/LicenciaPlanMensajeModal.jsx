@@ -140,8 +140,7 @@ export default function LicenciaPlanMensajeModal({ open, onClose, licencia = nul
                     <span className="module-option__info">
                       <span className="module-option__name">{p.nombre}</span>
                       <span className="module-option__meta">
-                        {fmtCupo(p.cupo)} conversaciones · {fmtCupo(p.cupo)} recordatorios ·{" "}
-                        {fmtCupo(p.cupo)} iniciás vos — Meta {formatMoney(p.costo)} · ganás{" "}
+                        {fmtCupo(p.cupo)} recordatorios/mes — Meta {formatMoney(p.costo)} · ganás{" "}
                         {formatMoney(p.ganancia)}
                       </span>
                     </span>
