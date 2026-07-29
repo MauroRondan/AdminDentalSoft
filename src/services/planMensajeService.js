@@ -21,3 +21,12 @@ export function getPlanMensajeLicencia(licid) {
 export function setPlanMensajeLicencia(licid, pmsid) {
   return api.put(`/admin/licencia/${licid}/plan-mensaje`, { pmsid });
 }
+
+/**
+ * POST /admin/licencia/{id}/plan-mensaje/recarga — suma cupo al MES EN CURSO sin tocar
+ * el plan (que es fijo y recurrente). Ese precio se factura una sola vez, en ese mes.
+ * payload: { pmsid } para usar un paquete del catálogo, o { cantidad, precio, obs }.
+ */
+export function recargarMensajes(licid, payload) {
+  return api.post(`/admin/licencia/${licid}/plan-mensaje/recarga`, payload);
+}

@@ -11,7 +11,12 @@ import {
   marcarRecordatorio,
   eliminarPlantilla,
 } from "../services/whatsappService";
-import { listPlanesMensaje, getPlanMensajeLicencia, setPlanMensajeLicencia } from "../services/planMensajeService";
+import {
+  listPlanesMensaje,
+  getPlanMensajeLicencia,
+  setPlanMensajeLicencia,
+  recargarMensajes,
+} from "../services/planMensajeService";
 
 const ESTADOS = [
   { id: "ACTIVO", label: "Activo" },
@@ -45,6 +50,9 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   const [planes, setPlanes] = useState([]);
   const [planSel, setPlanSel] = useState("");     // pmsid elegido ("" = sin plan)
   const [planInicial, setPlanInicial] = useState("");
+  // Consumo del mes + recargas (Sprint 87): el SA ve cuánto le queda de verdad.
+  const [uso, setUso] = useState(null);           // { consumo, recargado, cupoMes, recargas }
+  const [recargando, setRecargando] = useState(false);
   const [plantillas, setPlantillas] = useState([]);
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
@@ -84,6 +92,7 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
         const actual = mio?.actual?.pmsid != null ? String(mio.actual.pmsid) : "";
         setPlanSel(actual);
         setPlanInicial(actual);
+        setUso(mio);
         if (d?.configurado && d?.tieneToken) {
           listPlantillas(licid).then((pl) => setPlantillas(Array.isArray(pl) ? pl : [])).catch(() => {});
         }
@@ -149,6 +158,31 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
       toast.error(err.message || "No se pudo guardar");
     } finally {
       setSaving(false);
+    }
+  };
+
+  /**
+   * Recarga: suma cupo al MES EN CURSO con un paquete del catálogo. NO cambia el plan
+   * (que sigue siendo fijo y recurrente); el precio se factura una sola vez, ese mes.
+   */
+  const recargar = async (paquete) => {
+    if (recargando) return;
+    const ok = window.confirm(
+      `Recargar ${Number(paquete.cupo).toLocaleString("es-PY")} mensajes a ${licencia?.licnom}?\n\n` +
+      `Se le cobra ${formatMoney(paquete.precio)} UNA sola vez, en la factura de este mes. ` +
+      `El saldo se suma al que le quede.`,
+    );
+    if (!ok) return;
+    setRecargando(true);
+    try {
+      const r = await recargarMensajes(licid, { pmsid: paquete.pmsid });
+      setUso((u) => ({ ...(u || {}), ...r }));
+      toast.success(`Recargado: +${Number(paquete.cupo).toLocaleString("es-PY")} este mes`);
+      onSaved?.();
+    } catch (err) {
+      toast.error(err.message || "No se pudo recargar");
+    } finally {
+      setRecargando(false);
     }
   };
 
@@ -356,6 +390,51 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                   Lo que paga la clínica por mes. La ganancia entra sola al ingreso del dashboard.
                 </span>
               </div>
+
+              {/* Consumo + RECARGA (Sprint 87). El plan no se agranda: si se le acaba el
+                  cupo se recarga, y esa recarga se cobra solo en la factura de este mes. */}
+              {planInicial !== "" && uso?.consumo && (
+                <div className="field field--full" style={{ marginTop: 4 }}>
+                  <span className="field__label" style={{ fontWeight: 700 }}>
+                    Saldo · comprado {Number(uso.comprado ?? 0).toLocaleString("es-PY")}
+                  </span>
+                  <p style={{ margin: "0 0 .6rem", fontSize: ".85rem", color: "var(--color-text-secondary)" }}>
+                    Usados — conversaciones <b>{uso.consumo.conversaciones ?? 0}</b> ·
+                    recordatorios <b>{uso.consumo.recordatorios ?? 0}</b> ·
+                    iniciados <b>{uso.consumo.iniciados ?? 0}</b>
+                    {uso.restante && (
+                      <> — <b style={{ color: "var(--color-primary)" }}>
+                        quedan {Number(uso.restante.conversaciones ?? 0).toLocaleString("es-PY")} /
+                        {" "}{Number(uso.restante.recordatorios ?? 0).toLocaleString("es-PY")} /
+                        {" "}{Number(uso.restante.iniciados ?? 0).toLocaleString("es-PY")}
+                      </b></>
+                    )}
+                  </p>
+                  <span className="field__label">Recargar (se cobra en la factura de este mes)</span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                    {planes.map((p) => (
+                      <button
+                        key={p.pmsid}
+                        type="button"
+                        className="chip"
+                        disabled={recargando}
+                        onClick={() => recargar(p)}
+                        title={`+${p.cupo} mensajes por ${formatMoney(p.precio)} (una vez)`}
+                      >
+                        +{Number(p.cupo).toLocaleString("es-PY")} · {formatMoney(p.precio)}
+                      </button>
+                    ))}
+                  </div>
+                  {Array.isArray(uso.recargas) && uso.recargas.length > 0 && (
+                    <p style={{ margin: ".6rem 0 0", fontSize: ".78rem", color: "var(--color-text-tertiary)" }}>
+                      Últimas recargas:{" "}
+                      {uso.recargas.slice(0, 4).map((r) => (
+                        `${r.periodo} +${r.cantidad} (${formatMoney(r.precio)})`
+                      )).join(" · ")}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* 4) Plantillas (solo con conexión activa) */}
               {conectada && (

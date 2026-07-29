@@ -67,14 +67,14 @@ export default function DashboardPage() {
       value: d ? fmtGs(d.mrr) : "…",
       label: "Ingreso mensual estimado",
       hint: d && Number(d.mensajesGananciaMes) > 0
-        ? `Planes + add-ons + ${fmtGs(d.mensajesGananciaMes)} de ganancia por mensajes`
+        ? `Planes + add-ons + ${fmtGs(d.mensajesGananciaMes)} de mensajes vendidos este mes`
         : "Planes + add-ons de licencias activas",
     },
     {
       icon: "alertCircle",
       value: d ? fmtGs(d.metaCostoMes) : "…",
       label: "A pagar a Meta (mes)",
-      hint: d ? `${d.licenciasConMensajes} licencia(s) con plan de mensajes` : null,
+      hint: d ? `Por lo vendido/recargado · ${d.licenciasConMensajes} clínica(s) con saldo` : null,
     },
     {
       icon: "check",
