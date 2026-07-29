@@ -5,6 +5,7 @@ import ModulosPage from "../features/pages/ModulosPage";
 import PlanesPage from "../features/pages/PlanesPage";
 import LicenciasPage from "../features/pages/LicenciasPage";
 import LaboratoriosPage from "../features/pages/LaboratoriosPage";
+import WhatsAppAdminPage from "../features/pages/WhatsAppAdminPage";
 import CobranzasPage from "../features/pages/CobranzasPage";
 import VentaOrigenPage from "../features/pages/VentaOrigenPage";
 import AtribucionPage from "../features/pages/AtribucionPage";
@@ -69,6 +70,17 @@ const AppRoutes = () => {
             <PrivateRoute>
               <Layout>
                 <LaboratoriosPage />
+              </Layout>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/whatsapp"
+          element={
+            <PrivateRoute>
+              <Layout>
+                <WhatsAppAdminPage />
               </Layout>
             </PrivateRoute>
           }
