@@ -13,6 +13,7 @@ import {
   getRecursosLimite,
 } from "../../services/planService";
 import { listModulosActivos } from "../../services/moduloService";
+import { listPlanesMensaje } from "../../services/planMensajeService";
 
 const periodoLabel = (p) => (p === "ANUAL" ? "/año" : "/mes");
 
@@ -21,6 +22,7 @@ const modIdsOf = (modulos) =>
 
 export default function PlanesPage() {
   const [planes, setPlanes] = useState([]);
+  const [planesMensaje, setPlanesMensaje] = useState([]);
   const [modulos, setModulos] = useState([]);
   const [recursos, setRecursos] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -59,14 +61,16 @@ export default function PlanesPage() {
   const fetchAll = useCallback(async () => {
     cargarLoader();
     try {
-      const [planesRes, modsRes, recsRes] = await Promise.all([
+      const [planesRes, modsRes, recsRes, msjRes] = await Promise.all([
         listPlanes({ page: 1, size: 100 }),
         listModulosActivos(),
         getRecursosLimite().catch(() => []),
+        listPlanesMensaje().catch(() => []),
       ]);
       setPlanes(planesRes?.data ?? []);
       setModulos(modsRes ?? []);
       setRecursos(recsRes ?? []);
+      setPlanesMensaje(msjRes ?? []);
     } catch (err) {
       toast.error(err.message || "Error al cargar los planes");
       setPlanes([]);
@@ -227,6 +231,53 @@ export default function PlanesPage() {
             </article>
           ))}
         </div>
+      )}
+
+      {/* Planes de MENSAJES de WhatsApp (Sprint 85): catálogo con cupo, costo Meta y
+          precio final. Se asignan por licencia desde Licencias → "Plan de mensajes",
+          solo a planes con el módulo Bot habilitado. */}
+      {planesMensaje.length > 0 && (
+        <section style={{ marginTop: "2rem" }}>
+          <header className="page__header" style={{ marginBottom: "0.75rem" }}>
+            <div>
+              <h2 className="page__title" style={{ fontSize: "1.15rem" }}>Planes de mensajes · WhatsApp</h2>
+              <p className="page__subtitle">
+                Cupos de mensajería del bot por mes. La ganancia entra al ingreso mensual; el costo
+                es lo que le pagás a Meta. Se asignan desde Licencias → “Plan de mensajes”.
+              </p>
+            </div>
+          </header>
+          <div className="table-card">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Agendan con bot</th>
+                  <th>Recordatorios</th>
+                  <th>Iniciás vos</th>
+                  <th>Costo Meta/mes</th>
+                  <th>Precio final/mes</th>
+                  <th>Ganancia</th>
+                </tr>
+              </thead>
+              <tbody>
+                {planesMensaje.map((p) => (
+                  <tr key={p.pmsid}>
+                    <td style={{ fontWeight: 700 }}>{p.nombre}</td>
+                    <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
+                    <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
+                    <td>{Number(p.cupo).toLocaleString("es-PY")}</td>
+                    <td>{formatMoney(p.costo)}</td>
+                    <td style={{ fontWeight: 700 }}>{formatMoney(p.precio)}</td>
+                    <td style={{ color: "var(--color-primary)", fontWeight: 700 }}>
+                      {formatMoney(p.ganancia)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       <PlanModal

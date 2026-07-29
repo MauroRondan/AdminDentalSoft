@@ -8,6 +8,7 @@ import LicenciaAddonsModal from "../../components/LicenciaAddonsModal";
 import LicenciaLimitesModal from "../../components/LicenciaLimitesModal";
 import LicenciaDetalleModal from "../../components/LicenciaDetalleModal";
 import LicenciaWhatsAppModal from "../../components/LicenciaWhatsAppModal";
+import LicenciaPlanMensajeModal from "../../components/LicenciaPlanMensajeModal";
 import NuevaLicenciaModal from "../../components/NuevaLicenciaModal";
 import QRTrialModal from "../../components/QRTrialModal";
 import useFitRows from "../../hooks/useFitRows";
@@ -46,6 +47,7 @@ export default function LicenciasPage() {
   const [addonsModal, setAddonsModal] = useState({ open: false, licencia: null });
   const [limitesModal, setLimitesModal] = useState({ open: false, licencia: null });
   const [whatsappModal, setWhatsappModal] = useState({ open: false, licencia: null });
+  const [planMsjModal, setPlanMsjModal] = useState({ open: false, licencia: null });
   const [detalle, setDetalle] = useState({ open: false, licencia: null, mode: "view" });
   const [newOpen, setNewOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -65,6 +67,7 @@ export default function LicenciasPage() {
     { label: "Cupos", icon: "circleUser", onClick: () => setLimitesModal({ open: true, licencia: l }) },
     { label: "Add-ons", icon: "layers", onClick: () => openAddons(l) },
     { label: "WhatsApp", icon: "settings", onClick: () => setWhatsappModal({ open: true, licencia: l }) },
+    { label: "Plan de mensajes", icon: "wallet", onClick: () => setPlanMsjModal({ open: true, licencia: l }) },
     {
       label: l.licestado === false ? "Reactivar" : "Suspender",
       icon: "power",
@@ -382,6 +385,13 @@ export default function LicenciasPage() {
         open={whatsappModal.open}
         onClose={() => setWhatsappModal({ open: false, licencia: null })}
         licencia={whatsappModal.licencia}
+      />
+
+      <LicenciaPlanMensajeModal
+        open={planMsjModal.open}
+        onClose={() => setPlanMsjModal({ open: false, licencia: null })}
+        licencia={planMsjModal.licencia}
+        onSaved={fetchPage}
       />
 
       <QRTrialModal open={qrOpen} onClose={() => setQrOpen(false)} />

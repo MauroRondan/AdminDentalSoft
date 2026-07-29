@@ -66,7 +66,15 @@ export default function DashboardPage() {
       icon: "wallet",
       value: d ? fmtGs(d.mrr) : "…",
       label: "Ingreso mensual estimado",
-      hint: "Planes + add-ons de licencias activas",
+      hint: d && Number(d.mensajesGananciaMes) > 0
+        ? `Planes + add-ons + ${fmtGs(d.mensajesGananciaMes)} de ganancia por mensajes`
+        : "Planes + add-ons de licencias activas",
+    },
+    {
+      icon: "alertCircle",
+      value: d ? fmtGs(d.metaCostoMes) : "…",
+      label: "A pagar a Meta (mes)",
+      hint: d ? `${d.licenciasConMensajes} licencia(s) con plan de mensajes` : null,
     },
     {
       icon: "check",
