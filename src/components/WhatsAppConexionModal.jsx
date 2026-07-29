@@ -56,6 +56,9 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   const [recargando, setRecargando] = useState(false);
   // Confirmación con modal propio (nada de window.confirm).
   const [confirmar, setConfirmar] = useState(null); // { titulo, mensaje, textoOk, danger, accion }
+  // Recarga ELEGIDA pero todavía no aplicada: se ejecuta recién al "Guardar conexión",
+  // como cualquier otro campo del formulario. Así el SA puede arrepentirse cerrando.
+  const [recargaPend, setRecargaPend] = useState(null); // { pmsid, cupo, precio }
   const [plantillas, setPlantillas] = useState([]);
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
@@ -73,6 +76,7 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     setForm(EMPTY);
     setPlantillas([]);
     setPlNueva(false);
+    setRecargaPend(null);
     setLoading(true);
     Promise.all([getWhatsApp(licid), listPlanesMensaje(), getPlanMensajeLicencia(licid)])
       .then(([d, cat, mio]) => {
@@ -152,7 +156,13 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
         bienvenida: form.bienvenida.trim() || null,
       });
       if (planSel !== planInicial) {
+        // Asignar el paquete YA carga el saldo inicial (es la venta): por eso la primera
+        // vez alcanza con elegirlo y guardar — no hay recarga que aplicar.
         await setPlanMensajeLicencia(licid, planSel === "" ? null : Number(planSel));
+      } else if (recargaPend) {
+        // Recarga elegida en esta sesión: se aplica ACÁ, al guardar, no antes.
+        await recargarMensajes(licid, { pmsid: recargaPend.pmsid });
+        toast.success(`Recargado: +${Number(recargaPend.cupo).toLocaleString("es-PY")}`);
       }
       toast.success("Conexión de WhatsApp guardada");
       onSaved?.();
@@ -165,8 +175,9 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   };
 
   /**
-   * Recarga: suma cupo al MES EN CURSO con un paquete del catálogo. NO cambia el plan
-   * (que sigue siendo fijo y recurrente); el precio se factura una sola vez, ese mes.
+   * Elegir una recarga: confirma y la deja PENDIENTE. El saldo recién se suma al tocar
+   * "Guardar conexión" — igual que el resto del formulario, así el SA puede cerrar sin
+   * aplicar nada si se equivocó de clínica o de paquete.
    */
   const recargar = (paquete) => {
     setConfirmar({
@@ -174,13 +185,11 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
       mensaje:
         `${licencia?.licnom}\n\n` +
         `Se le cobra ${formatMoney(paquete.precio)} una sola vez, en la factura de este mes. ` +
-        `El saldo se suma al que le quede.`,
-      textoOk: "Recargar",
+        `El saldo se suma al que le quede.\n\n` +
+        `La recarga se aplica cuando toques "Guardar conexión".`,
+      textoOk: "Agregar recarga",
       accion: async () => {
-        const r = await recargarMensajes(licid, { pmsid: paquete.pmsid });
-        setUso((u) => ({ ...(u || {}), ...r }));
-        toast.success(`Recargado: +${Number(paquete.cupo).toLocaleString("es-PY")}`);
-        onSaved?.();
+        setRecargaPend({ pmsid: paquete.pmsid, cupo: paquete.cupo, precio: paquete.precio });
       },
     });
   };
@@ -441,6 +450,25 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                       </button>
                     ))}
                   </div>
+                  {recargaPend && (
+                    <p style={{
+                      margin: ".6rem 0 0", padding: ".5rem .7rem", borderRadius: ".6rem",
+                      fontSize: ".82rem", fontWeight: 600,
+                      background: "color-mix(in srgb, var(--color-primary) 12%, transparent)",
+                      color: "var(--color-primary)",
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <Icon name="check" size={14} />
+                      <span>
+                        Recarga de +{Number(recargaPend.cupo).toLocaleString("es-PY")}{" "}
+                        ({formatMoney(recargaPend.precio)}) — se aplica al guardar.
+                      </span>
+                      <button type="button" className="chip" style={{ marginLeft: "auto" }}
+                        onClick={() => setRecargaPend(null)}>
+                        Quitar
+                      </button>
+                    </p>
+                  )}
                   {Array.isArray(uso.recargas) && uso.recargas.length > 0 && (
                     <p style={{ margin: ".6rem 0 0", fontSize: ".78rem", color: "var(--color-text-tertiary)" }}>
                       Últimas recargas:{" "}
