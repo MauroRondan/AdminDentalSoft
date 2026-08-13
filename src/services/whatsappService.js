@@ -38,7 +38,7 @@ export function eliminarPlantilla(licid, wplid) {
   return api.del(`/admin/whatsapp/${licid}/plantillas/${wplid}`);
 }
 
-/* Onboarding sin Facebook (Sprint 90): WABAs madre + activar número por código SMS. */
+/* Onboarding sin Facebook (Sprint 92): WABAs madre + activar número por código SMS. */
 
 export function listWabas() {
   return api.get(`/admin/whatsapp/wabas`);

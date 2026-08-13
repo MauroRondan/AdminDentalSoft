@@ -70,7 +70,7 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
   const [plGuardando, setPlGuardando] = useState(false);
-  // Onboarding sin Facebook (Sprint 90): WABA madre + número + código SMS. La conexión
+  // Onboarding sin Facebook (Sprint 92): WABA madre + número + código SMS. La conexión
   // (phone id, WABA, token, número visible) la arma sola el backend al verificar.
   const [wabas, setWabas] = useState([]);            // [{id, nombre, wabaId, usados, disponibles}]
   const [wabaSel, setWabaSel] = useState("");        // wabaId (Meta) elegido
