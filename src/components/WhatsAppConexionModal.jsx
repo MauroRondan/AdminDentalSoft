@@ -12,6 +12,10 @@ import {
   marcarRecordatorio,
   crearRecordatorioPlantilla,
   eliminarPlantilla,
+  listWabas,
+  crearWaba,
+  onboardingAgregarNumero,
+  onboardingVerificarNumero,
 } from "../services/whatsappService";
 import {
   listPlanesMensaje,
@@ -66,6 +70,17 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   const [plNueva, setPlNueva] = useState(false);
   const [plForm, setPlForm] = useState({ nombre: "", cuerpo: "", ejemplos: [], boton: false, recordatorio: false });
   const [plGuardando, setPlGuardando] = useState(false);
+  // Onboarding sin Facebook (Sprint 90): WABA madre + número + código SMS. La conexión
+  // (phone id, WABA, token, número visible) la arma sola el backend al verificar.
+  const [wabas, setWabas] = useState([]);            // [{id, nombre, wabaId, usados, disponibles}]
+  const [wabaSel, setWabaSel] = useState("");        // wabaId (Meta) elegido
+  const [wabaNuevo, setWabaNuevo] = useState(null);  // { nombre, wabaId } → mini-form "+ WABA"
+  const [act, setAct] = useState({ cc: "595", phone: "", verifiedName: "", codeMethod: "SMS" });
+  const [actFase, setActFase] = useState("inicio");  // inicio | codigo
+  const [actPhoneId, setActPhoneId] = useState("");
+  const [actCode, setActCode] = useState("");
+  const [actBusy, setActBusy] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false); // carga manual colapsada (números de prueba)
   const [render, setRender] = useState(open);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -80,6 +95,14 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     setPlantillas([]);
     setPlNueva(false);
     setRecargaPend(null);
+    setWabaSel("");
+    setWabaNuevo(null);
+    setAct({ cc: "595", phone: "", verifiedName: licencia?.licnom || "", codeMethod: "SMS" });
+    setActFase("inicio");
+    setActPhoneId("");
+    setActCode("");
+    setManualOpen(false);
+    listWabas().then((w) => setWabas(Array.isArray(w) ? w : [])).catch(() => {});
     setLoading(true);
     Promise.all([getWhatsApp(licid), listPlanesMensaje(), getPlanMensajeLicencia(licid)])
       .then(([d, cat, mio]) => {
@@ -136,6 +159,83 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
       toast.success("Copiado");
     } catch {
       toast.error("No se pudo copiar");
+    }
+  };
+
+  /* ── Onboarding sin Facebook ─────────────────────────────────────────────── */
+
+  const guardarWabaNueva = async () => {
+    if (!wabaNuevo?.nombre?.trim() || !wabaNuevo?.wabaId?.trim()) {
+      toast.error("Faltan el nombre o el ID de la WABA");
+      return;
+    }
+    try {
+      await crearWaba(wabaNuevo.nombre.trim(), wabaNuevo.wabaId.trim());
+      toast.success("WABA guardada");
+      setWabaSel(wabaNuevo.wabaId.trim().replace(/\D/g, ""));
+      setWabaNuevo(null);
+      const w = await listWabas();
+      setWabas(Array.isArray(w) ? w : []);
+    } catch (err) {
+      toast.error(err.message || "No se pudo guardar la WABA");
+    }
+  };
+
+  /** Paso 1: alta del número en la WABA madre + Meta le manda el código al cliente. */
+  const enviarCodigo = async () => {
+    if (!wabaSel) { toast.error("Elegí la WABA donde colgar el número"); return; }
+    if (!act.phone.trim()) { toast.error("Cargá el número del cliente (sin el código de país)"); return; }
+    if (!act.verifiedName.trim()) { toast.error("Cargá el nombre visible del negocio"); return; }
+    setActBusy(true);
+    try {
+      const r = await onboardingAgregarNumero(licid, {
+        wabaId: wabaSel, cc: act.cc.trim(), phone: act.phone.trim(),
+        verifiedName: act.verifiedName.trim(), codeMethod: act.codeMethod,
+      });
+      setActPhoneId(r?.phoneNumberId || "");
+      if (r?.yaVerificado) {
+        // Número ya verificado de un alta anterior: se activa directo, sin código.
+        await activarNumero(r?.phoneNumberId, "");
+      } else {
+        setActFase("codigo");
+        toast.success(`Código enviado por ${act.codeMethod === "VOICE" ? "llamada" : "SMS"} al número del cliente`);
+      }
+    } catch (err) {
+      toast.error(err.message || "No se pudo agregar el número");
+    } finally {
+      setActBusy(false);
+    }
+  };
+
+  /** Paso 2: verifica el código — el backend arma la conexión completa solo. */
+  const activarNumero = async (phoneId = actPhoneId, code = actCode) => {
+    if (!phoneId) { toast.error("Repetí el envío del código"); return; }
+    setActBusy(true);
+    try {
+      const r = await onboardingVerificarNumero(licid, {
+        wabaId: wabaSel,
+        phoneNumberId: phoneId,
+        code: (code || "").trim() || null,
+        bienvenida: form.bienvenida.trim() || null,
+      });
+      toast.success(r?.mensaje || "Número activado: la clínica quedó conectada");
+      setMeta((m) => ({ ...m, configurado: true, tieneToken: true }));
+      setForm((f) => ({
+        ...f,
+        estado: r?.estado || "ACTIVO",
+        phoneId: r?.phoneId || phoneId,
+        wabaId: r?.wabaId || wabaSel,
+        numero: r?.numero || f.numero,
+        token: "",
+      }));
+      setActFase("inicio");
+      setActCode("");
+      listPlantillas(licid).then((pl) => setPlantillas(Array.isArray(pl) ? pl : [])).catch(() => {});
+      onSaved?.();
+    } catch (err) {
+      toast.error(err.message || "No se pudo activar el número");
+    } finally {
+      setActBusy(false);
     }
   };
 
@@ -336,52 +436,160 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
               <CopyRow label="Callback URL" value={meta.webhookUrl} />
               <CopyRow label="Token de verificación" value={meta.verifyToken} />
 
-              {/* 2) Credenciales */}
+              {/* 2) Número de la clínica */}
               <div className="field field--full" style={{ marginTop: 4 }}>
-                <span className="field__label" style={{ fontWeight: 700 }}>2) Credenciales del número de la clínica</span>
+                <span className="field__label" style={{ fontWeight: 700 }}>2) Número de la clínica</span>
               </div>
 
-              <div className="field field--full">
-                <span className="field__label">Estado</span>
-                <div className="chip-group">
-                  {ESTADOS.map((e) => (
-                    <button
-                      key={e.id}
-                      type="button"
-                      className={`chip${form.estado === e.id ? " chip--active" : ""}`}
-                      onClick={() => update("estado", e.id)}
-                    >
-                      {e.label}
+              {/* Activar por número (sin Facebook) — la conexión se arma sola al verificar */}
+              {!conectada && (
+                <div className="field field--full" style={{ border: "1px solid var(--color-primary)",
+                  borderRadius: ".7rem", padding: ".8rem", background: "var(--color-surface-2, #f4faf8)" }}>
+                  <span className="field__label" style={{ fontWeight: 700 }}>
+                    Activar por número (sin Facebook)
+                  </span>
+                  <p style={{ margin: "0 0 .6rem", fontSize: ".82rem", color: "var(--color-text-secondary)" }}>
+                    Cargá el número del cliente y el nombre del negocio. Le llega un código, lo
+                    verificás y queda activo — sin tokens ni IDs a mano.
+                  </p>
+
+                  <span className="field__label">Cuenta (WABA)</span>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <select className="field__input" style={{ flex: 1, minWidth: 0 }}
+                      value={wabaSel} onChange={(e) => setWabaSel(e.target.value)}>
+                      <option value="">Elegí la WABA madre…</option>
+                      {wabas.map((w) => (
+                        <option key={w.id} value={w.wabaId}>
+                          {w.nombre} — {w.disponibles}/20 libres
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" className="chip" onClick={() => setWabaNuevo({ nombre: "", wabaId: "" })}>
+                      + WABA
                     </button>
-                  ))}
+                  </div>
+
+                  {wabaNuevo && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8,
+                      padding: ".6rem", border: "1px dashed var(--color-border)", borderRadius: ".6rem" }}>
+                      <input type="text" className="field__input" style={{ flex: "1 1 160px" }}
+                        placeholder="Nombre (ej. Clientes 1 al 20)"
+                        value={wabaNuevo.nombre}
+                        onChange={(e) => setWabaNuevo((p) => ({ ...p, nombre: e.target.value }))} />
+                      <input type="text" className="field__input" style={{ flex: "1 1 160px" }}
+                        placeholder="ID de la WABA (Meta)"
+                        value={wabaNuevo.wabaId}
+                        onChange={(e) => setWabaNuevo((p) => ({ ...p, wabaId: e.target.value }))} />
+                      <button type="button" className="chip" style={{ fontWeight: 700, color: "var(--color-primary)" }}
+                        onClick={guardarWabaNueva}>Guardar</button>
+                      <button type="button" className="chip" onClick={() => setWabaNuevo(null)}>Cancelar</button>
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                    <label className="field" style={{ flex: "0 0 90px" }}>
+                      <span className="field__label">País</span>
+                      <input type="text" className="field__input" value={act.cc}
+                        onChange={(e) => setAct((p) => ({ ...p, cc: e.target.value }))} />
+                    </label>
+                    <label className="field" style={{ flex: "1 1 160px" }}>
+                      <span className="field__label">Número (sin país)</span>
+                      <input type="text" className="field__input" placeholder="9xxxxxxxx"
+                        value={act.phone}
+                        onChange={(e) => setAct((p) => ({ ...p, phone: e.target.value }))} />
+                    </label>
+                  </div>
+                  <label className="field field--full" style={{ marginBottom: 8 }}>
+                    <span className="field__label">Nombre del negocio (lo ve el destinatario)</span>
+                    <input type="text" className="field__input"
+                      value={act.verifiedName}
+                      onChange={(e) => setAct((p) => ({ ...p, verifiedName: e.target.value }))} />
+                  </label>
+
+                  {actFase === "inicio" ? (
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <select className="field__input" style={{ flex: 1, minWidth: 0 }}
+                        value={act.codeMethod}
+                        onChange={(e) => setAct((p) => ({ ...p, codeMethod: e.target.value }))}>
+                        <option value="SMS">Código por SMS</option>
+                        <option value="VOICE">Código por llamada</option>
+                      </select>
+                      <button type="button" className="appt-modal__save" disabled={actBusy} onClick={enviarCodigo}>
+                        {actBusy ? "Enviando…" : "Enviar código"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <input type="text" className="field__input" style={{ flex: "1 1 140px" }}
+                        placeholder="Código recibido" value={actCode}
+                        onChange={(e) => setActCode(e.target.value)} />
+                      <button type="button" className="appt-modal__save" disabled={actBusy}
+                        onClick={() => activarNumero()}>
+                        {actBusy ? "Activando…" : "Verificar y activar"}
+                      </button>
+                      <button type="button" className="chip" disabled={actBusy} onClick={enviarCodigo}>
+                        Reenviar código
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              <label className="field">
-                <span className="field__label">Phone number ID *</span>
-                <input type="text" className="field__input" placeholder="Ej. 1224941110692928"
-                  value={form.phoneId} onChange={(e) => update("phoneId", e.target.value)} />
-              </label>
+              {/* Carga manual: para el número de PRUEBA de Meta o casos especiales. Si la
+                  clínica ya está conectada se muestra directo (modo edición). */}
+              {!conectada && (
+                <div className="field field--full">
+                  <button type="button" className="chip" onClick={() => setManualOpen((v) => !v)}>
+                    {manualOpen ? "▾" : "▸"} Carga manual (avanzado — número de prueba)
+                  </button>
+                </div>
+              )}
 
-              <label className="field">
-                <span className="field__label">WABA ID</span>
-                <input type="text" className="field__input" placeholder="WhatsApp Business Account ID"
-                  value={form.wabaId} onChange={(e) => update("wabaId", e.target.value)} />
-                <span className="field__hint">Necesario para crear plantillas desde acá.</span>
-              </label>
+              {(conectada || manualOpen) && (
+                <>
+                  <div className="field field--full">
+                    <span className="field__label">Estado</span>
+                    <div className="chip-group">
+                      {ESTADOS.map((e) => (
+                        <button
+                          key={e.id}
+                          type="button"
+                          className={`chip${form.estado === e.id ? " chip--active" : ""}`}
+                          onClick={() => update("estado", e.id)}
+                        >
+                          {e.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <label className="field">
-                <span className="field__label">Número visible</span>
-                <input type="text" className="field__input" placeholder="Ej. +595 9xx xxx xxx"
-                  value={form.numero} onChange={(e) => update("numero", e.target.value)} />
-              </label>
+                  <label className="field">
+                    <span className="field__label">Phone number ID *</span>
+                    <input type="text" className="field__input" placeholder="Ej. 1224941110692928"
+                      value={form.phoneId} onChange={(e) => update("phoneId", e.target.value)} />
+                  </label>
 
-              <label className="field">
-                <span className="field__label">Token de acceso de Meta</span>
-                <input type="password" className="field__input" autoComplete="off"
-                  placeholder={meta.tieneToken ? "•••••• (cargado — vacío para conservarlo)" : "Pegá el token (EAA…)"}
-                  value={form.token} onChange={(e) => update("token", e.target.value)} />
-              </label>
+                  <label className="field">
+                    <span className="field__label">WABA ID</span>
+                    <input type="text" className="field__input" placeholder="WhatsApp Business Account ID"
+                      value={form.wabaId} onChange={(e) => update("wabaId", e.target.value)} />
+                    <span className="field__hint">Necesario para crear plantillas desde acá.</span>
+                  </label>
+
+                  <label className="field">
+                    <span className="field__label">Número visible</span>
+                    <input type="text" className="field__input" placeholder="Ej. +595 9xx xxx xxx"
+                      value={form.numero} onChange={(e) => update("numero", e.target.value)} />
+                  </label>
+
+                  <label className="field">
+                    <span className="field__label">Token de acceso de Meta</span>
+                    <input type="password" className="field__input" autoComplete="off"
+                      placeholder={meta.tieneToken ? "•••••• (cargado — vacío para conservarlo)" : "Pegá el token (EAA…)"}
+                      value={form.token} onChange={(e) => update("token", e.target.value)} />
+                  </label>
+                </>
+              )}
 
               <label className="field field--full">
                 <span className="field__label">Saludo del bot (opcional)</span>

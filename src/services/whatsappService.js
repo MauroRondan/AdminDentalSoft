@@ -37,3 +37,27 @@ export function crearRecordatorioPlantilla(licid, nombre) {
 export function eliminarPlantilla(licid, wplid) {
   return api.del(`/admin/whatsapp/${licid}/plantillas/${wplid}`);
 }
+
+/* Onboarding sin Facebook (Sprint 90): WABAs madre + activar número por código SMS. */
+
+export function listWabas() {
+  return api.get(`/admin/whatsapp/wabas`);
+}
+
+export function crearWaba(nombre, wabaId) {
+  return api.post(`/admin/whatsapp/wabas`, { nombre, wabaId });
+}
+
+export function eliminarWaba(id) {
+  return api.del(`/admin/whatsapp/wabas/${id}`);
+}
+
+/** Paso 1: agrega el número del cliente a la WABA y Meta le manda el código. */
+export function onboardingAgregarNumero(licid, body) {
+  return api.post(`/admin/whatsapp/${licid}/numero/agregar`, body);
+}
+
+/** Paso 2: verifica el código — la clínica queda conectada sola. */
+export function onboardingVerificarNumero(licid, body) {
+  return api.post(`/admin/whatsapp/${licid}/numero/verificar`, body);
+}
