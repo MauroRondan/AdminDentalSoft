@@ -66,3 +66,18 @@ export function onboardingVerificarNumero(licid, body) {
 export function onboardingRegistrarNumero(licid, body) {
   return api.post(`/admin/whatsapp/${licid}/numero/registrar`, body || {});
 }
+
+/* Plantillas de la WABA (Sprint 95): son GENÉRICAS — una vez por WABA, no por
+   clínica. Se leen/escriben directo en Meta, así el estado que se ve es el real. */
+
+export function listPlantillasWaba(wabaId) {
+  return api.get(`/admin/whatsapp/wabas/${wabaId}/plantillas`);
+}
+
+export function crearPlantillaWaba(wabaId, payload) {
+  return api.post(`/admin/whatsapp/wabas/${wabaId}/plantillas`, payload);
+}
+
+export function eliminarPlantillaWaba(wabaId, nombre) {
+  return api.del(`/admin/whatsapp/wabas/${wabaId}/plantillas?nombre=${encodeURIComponent(nombre)}`);
+}

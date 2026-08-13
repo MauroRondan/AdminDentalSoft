@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "../../components/icons";
 import WhatsAppConexionModal from "../../components/WhatsAppConexionModal";
+import WhatsAppPlantillasModal from "../../components/WhatsAppPlantillasModal";
 import { cargarLoader, ocultarLoader } from "../../hooks/LoaderManager";
 import { listLicenciasConBot } from "../../services/whatsappService";
 
@@ -20,6 +21,8 @@ export default function WhatsAppAdminPage() {
   const [rows, setRows] = useState([]);
   const [modal, setModal] = useState({ open: false, licencia: null });
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Plantillas: son de la WABA (genéricas), no de cada clínica — por eso viven acá.
+  const [plantillasOpen, setPlantillasOpen] = useState(false);
 
   const fetchAll = useCallback(async () => {
     cargarLoader();
@@ -52,6 +55,9 @@ export default function WhatsAppAdminPage() {
           </p>
         </div>
         <div className="page__head-actions">
+          <button className="page__new page__new--ghost" onClick={() => setPlantillasOpen(true)}>
+            <Icon name="fileCheck" size={18} /> Plantillas
+          </button>
           <button className="page__new" onClick={() => setPickerOpen(true)}>
             <Icon name="plus" size={18} /> Conectar clínica
           </button>
@@ -145,6 +151,8 @@ export default function WhatsAppAdminPage() {
           </div>
         </div>
       )}
+
+      <WhatsAppPlantillasModal open={plantillasOpen} onClose={() => setPlantillasOpen(false)} />
 
       <WhatsAppConexionModal
         open={modal.open}
