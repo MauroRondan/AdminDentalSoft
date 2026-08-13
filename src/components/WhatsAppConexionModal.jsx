@@ -80,7 +80,6 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
   const [actPhoneId, setActPhoneId] = useState("");
   const [actCode, setActCode] = useState("");
   const [actBusy, setActBusy] = useState(false);
-  const [manualOpen, setManualOpen] = useState(false); // carga manual colapsada (números de prueba)
   const [render, setRender] = useState(open);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -101,7 +100,6 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     setActFase("inicio");
     setActPhoneId("");
     setActCode("");
-    setManualOpen(false);
     listWabas().then((w) => setWabas(Array.isArray(w) ? w : [])).catch(() => {});
     setLoading(true);
     Promise.all([getWhatsApp(licid), listPlanesMensaje(), getPlanMensajeLicencia(licid)])
@@ -241,11 +239,11 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
 
   const submit = async () => {
     if (form.estado !== "SANDBOX" && !form.phoneId.trim()) {
-      toast.error("El Phone number ID es obligatorio");
+      toast.error("Primero activá el número: enviá el código al cliente y verificalo arriba");
       return;
     }
     if (form.estado === "ACTIVO" && !meta.tieneToken && !form.token.trim()) {
-      toast.error("Cargá el token de acceso de Meta");
+      toast.error("La conexión no tiene token — activá el número con el flujo de arriba");
       return;
     }
     setSaving(true);
@@ -535,17 +533,10 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                 </div>
               )}
 
-              {/* Carga manual: para el número de PRUEBA de Meta o casos especiales. Si la
-                  clínica ya está conectada se muestra directo (modo edición). */}
-              {!conectada && (
-                <div className="field field--full">
-                  <button type="button" className="chip" onClick={() => setManualOpen((v) => !v)}>
-                    {manualOpen ? "▾" : "▸"} Carga manual (avanzado — número de prueba)
-                  </button>
-                </div>
-              )}
-
-              {(conectada || manualOpen) && (
+              {/* Los datos de la conexión solo se muestran cuando la clínica YA está
+                  conectada (modo edición: pausar, ver ids). El alta es SIEMPRE por el
+                  flujo de arriba — la carga manual se eliminó. */}
+              {conectada && (
                 <>
                   <div className="field field--full">
                     <span className="field__label">Estado</span>
