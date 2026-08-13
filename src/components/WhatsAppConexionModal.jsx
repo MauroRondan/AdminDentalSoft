@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "./icons";
 import ConfirmModal from "./ConfirmModal";
-import { API_URL } from "../config/constants";
 import { formatMoney } from "../utils/format";
 import {
   getWhatsApp,
@@ -12,6 +11,7 @@ import {
   onboardingAgregarNumero,
   onboardingVerificarNumero,
   onboardingRegistrarNumero,
+  eliminarNumeroClinica,
 } from "../services/whatsappService";
 import {
   listPlanesMensaje,
@@ -35,7 +35,7 @@ const EMPTY = { estado: "ACTIVO", phoneId: "", wabaId: "", numero: "", token: ""
  */
 export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved }) {
   const [form, setForm] = useState(EMPTY);
-  const [meta, setMeta] = useState({ verifyToken: "", webhookUrl: "", tieneToken: false, configurado: false });
+  const [meta, setMeta] = useState({ tieneToken: false, configurado: false });
   const [planes, setPlanes] = useState([]);
   const [planSel, setPlanSel] = useState("");     // pmsid elegido ("" = sin plan)
   const [planInicial, setPlanInicial] = useState("");
@@ -87,10 +87,7 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
           token: "",
           bienvenida: d?.bienvenida || "",
         });
-        const base = (API_URL || "").replace(/\/$/, "");
         setMeta({
-          verifyToken: d?.verifyToken || "",
-          webhookUrl: base + (d?.webhookPath || "/public/whatsapp/webhook"),
           tieneToken: Boolean(d?.tieneToken),
           configurado: Boolean(d?.configurado),
         });
@@ -99,8 +96,6 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
         setPlanSel(actual);
         setPlanInicial(actual);
         setUso(mio);
-        if (d?.configurado && d?.tieneToken) {
-        }
       })
       .catch((err) => toast.error(err.message || "No se pudo cargar la conexión"))
       .finally(() => setLoading(false));
@@ -125,14 +120,6 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
 
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
-  const copiar = async (txt) => {
-    try {
-      await navigator.clipboard.writeText(txt);
-      toast.success("Copiado");
-    } catch {
-      toast.error("No se pudo copiar");
-    }
-  };
 
   /* ── Onboarding sin Facebook ─────────────────────────────────────────────── */
 
@@ -197,6 +184,16 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     } finally {
       setActBusy(false);
     }
+  };
+
+  /** Baja del número: se borra en Meta y la clínica queda desconectada. */
+  const eliminarNumero = async () => {
+    const r = await eliminarNumeroClinica(licid);
+    toast.success(r?.mensaje || "Número eliminado");
+    setMeta((m) => ({ ...m, configurado: false, tieneToken: false }));
+    setForm(EMPTY);
+    onSaved?.();
+    onClose?.();
   };
 
   /** Paso 2: verifica el código — el backend arma la conexión completa solo. */
@@ -309,22 +306,6 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
 
 
 
-  const CopyRow = ({ label, value }) => (
-    <label className="field field--full">
-      <span className="field__label">{label}</span>
-      <div style={{ display: "flex", gap: 6 }}>
-        <input type="text" className="field__input" value={value} readOnly onFocus={(e) => e.target.select()} />
-        <button
-          type="button"
-          onClick={() => copiar(value)}
-          style={{ flexShrink: 0, padding: "0 .7rem", border: "1px solid var(--color-border)", borderRadius: ".6rem", background: "var(--color-surface)", cursor: "pointer" }}
-          aria-label={`Copiar ${label}`}
-        >
-          <Icon name="copy" size={16} />
-        </button>
-      </div>
-    </label>
-  );
 
   return (
     <div
@@ -352,19 +333,11 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
             <p style={{ color: "var(--color-text-secondary)" }}>Cargando…</p>
           ) : (
             <div className="field-grid">
-              {/* 1) Webhook para Meta */}
+              {/* El webhook es global de la app (se configura UNA vez en Meta) y el
+                  phone id / WABA / token los resuelve el alta sola: no hay nada que
+                  copiar ni pegar acá. Solo el número, el plan y su saldo. */}
               <div className="field field--full">
-                <span className="field__label" style={{ fontWeight: 700 }}>1) Datos para pegar en Meta (webhook)</span>
-                <p style={{ margin: "0 0 .5rem", fontSize: ".82rem", color: "var(--color-text-tertiary)" }}>
-                  En Meta → WhatsApp → Configuración → Webhooks, pegá estos valores y suscribí el campo <b>messages</b>.
-                </p>
-              </div>
-              <CopyRow label="Callback URL" value={meta.webhookUrl} />
-              <CopyRow label="Token de verificación" value={meta.verifyToken} />
-
-              {/* 2) Número de la clínica */}
-              <div className="field field--full" style={{ marginTop: 4 }}>
-                <span className="field__label" style={{ fontWeight: 700 }}>2) Número de la clínica</span>
+                <span className="field__label" style={{ fontWeight: 700 }}>1) Número de la clínica</span>
               </div>
 
               {/* Activar por número (sin Facebook) — la conexión se arma sola al verificar */}
@@ -495,31 +468,21 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                     </div>
                   </div>
 
-                  <label className="field">
-                    <span className="field__label">Phone number ID *</span>
-                    <input type="text" className="field__input" placeholder="Ej. 1224941110692928"
-                      value={form.phoneId} onChange={(e) => update("phoneId", e.target.value)} />
-                  </label>
-
-                  <label className="field">
-                    <span className="field__label">WABA ID</span>
-                    <input type="text" className="field__input" placeholder="WhatsApp Business Account ID"
-                      value={form.wabaId} onChange={(e) => update("wabaId", e.target.value)} />
-                    <span className="field__hint">La cuenta de Meta donde cuelga el número.</span>
-                  </label>
-
-                  <label className="field">
-                    <span className="field__label">Número visible</span>
-                    <input type="text" className="field__input" placeholder="Ej. +595 9xx xxx xxx"
-                      value={form.numero} onChange={(e) => update("numero", e.target.value)} />
-                  </label>
-
-                  <label className="field">
-                    <span className="field__label">Token de acceso de Meta</span>
-                    <input type="password" className="field__input" autoComplete="off"
-                      placeholder={meta.tieneToken ? "•••••• (cargado — vacío para conservarlo)" : "Pegá el token (EAA…)"}
-                      value={form.token} onChange={(e) => update("token", e.target.value)} />
-                  </label>
+                  {/* Baja: borra el número en Meta (libera el cupo de la WABA) y
+                      desconecta la clínica. El historial de mensajes no se toca. */}
+                  <div className="field field--full">
+                    <button type="button" className="chip" disabled={actBusy}
+                      style={{ color: "var(--color-error)", fontWeight: 700 }}
+                      onClick={() => setConfirmar({
+                        titulo: "Eliminar el número de la clínica",
+                        mensaje: `${form.numero || "El número"}\n\nSe borra de Meta (se libera el cupo de la WABA) y la clínica queda desconectada. El historial de mensajes se conserva.`,
+                        textoOk: "Eliminar número",
+                        danger: true,
+                        accion: eliminarNumero,
+                      })}>
+                      Eliminar número
+                    </button>
+                  </div>
                 </>
               )}
 

@@ -81,3 +81,8 @@ export function crearPlantillaWaba(wabaId, payload) {
 export function eliminarPlantillaWaba(wabaId, nombre) {
   return api.del(`/admin/whatsapp/wabas/${wabaId}/plantillas?nombre=${encodeURIComponent(nombre)}`);
 }
+
+/** Baja del número: lo borra de Meta (libera cupo de la WABA) y desconecta la clínica. */
+export function eliminarNumeroClinica(licid) {
+  return api.del(`/admin/whatsapp/${licid}/numero`);
+}
