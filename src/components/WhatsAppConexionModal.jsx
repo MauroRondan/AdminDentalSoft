@@ -16,6 +16,7 @@ import {
   crearWaba,
   onboardingAgregarNumero,
   onboardingVerificarNumero,
+  onboardingRegistrarNumero,
 } from "../services/whatsappService";
 import {
   listPlanesMensaje,
@@ -205,6 +206,26 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
     }
   };
 
+  /**
+   * Reintento del /register en Meta. Sin registro el número figura "No registrado" y
+   * el bot no recibe ni envía nada — es el paso que hay que repetir si Meta lo rechazó
+   * justo después del verify (suele tardar unos segundos en habilitarlo).
+   */
+  const registrarNumero = async () => {
+    if (actBusy) return;
+    setActBusy(true);
+    try {
+      const r = await onboardingRegistrarNumero(licid, {
+        phoneNumberId: form.phoneId.trim() || null,
+      });
+      toast.success(r?.mensaje || "Número registrado en Cloud API");
+    } catch (err) {
+      toast.error(err.message || "No se pudo registrar el número", { duration: 10000 });
+    } finally {
+      setActBusy(false);
+    }
+  };
+
   /** Paso 2: verifica el código — el backend arma la conexión completa solo. */
   const activarNumero = async (phoneId = actPhoneId, code = actCode) => {
     if (!phoneId) { toast.error("Repetí el envío del código"); return; }
@@ -216,7 +237,9 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
         code: (code || "").trim() || null,
         bienvenida: form.bienvenida.trim() || null,
       });
-      toast.success(r?.mensaje || "Número activado: la clínica quedó conectada");
+      // Si Meta no completó el /register, el número queda MUDO: hay que reintentar.
+      if (r?.registrado === false) toast.error(r?.mensaje, { duration: 12000 });
+      else toast.success(r?.mensaje || "Número activado: la clínica quedó conectada");
       setMeta((m) => ({ ...m, configurado: true, tieneToken: true }));
       setForm((f) => ({
         ...f,
@@ -538,6 +561,19 @@ export default function WhatsAppConexionModal({ open, onClose, licencia, onSaved
                   flujo de arriba — la carga manual se eliminó. */}
               {conectada && (
                 <>
+                  {/* Sin el /register de Meta el número queda "No registrado" y el bot
+                      no recibe ni envía. Este botón lo reintenta cuando hace falta. */}
+                  <div className="field field--full" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <button type="button" className="chip" disabled={actBusy}
+                      style={{ fontWeight: 700, color: "var(--color-primary)" }}
+                      onClick={registrarNumero}>
+                      {actBusy ? "Registrando…" : "Registrar número en Meta"}
+                    </button>
+                    <span style={{ fontSize: ".78rem", color: "var(--color-text-tertiary)" }}>
+                      Si el bot no responde y en Meta figura “No registrado”, tocá acá.
+                    </span>
+                  </div>
+
                   <div className="field field--full">
                     <span className="field__label">Estado</span>
                     <div className="chip-group">

@@ -61,3 +61,8 @@ export function onboardingAgregarNumero(licid, body) {
 export function onboardingVerificarNumero(licid, body) {
   return api.post(`/admin/whatsapp/${licid}/numero/verificar`, body);
 }
+
+/** Reintento del registro en Cloud API (sin esto el número queda mudo en Meta). */
+export function onboardingRegistrarNumero(licid, body) {
+  return api.post(`/admin/whatsapp/${licid}/numero/registrar`, body || {});
+}
