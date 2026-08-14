@@ -216,7 +216,7 @@ export default function WhatsAppPlantillasModal({ open, onClose }) {
                         ))}
                       </div>
                     )}
-                    {p.motivo && (
+                    {p.motivo && p.motivo !== "NONE" && (
                       <p style={{ margin: ".3rem 0 0", fontSize: ".76rem", color: "var(--color-error)" }}>
                         Motivo: {p.motivo}
                       </p>
